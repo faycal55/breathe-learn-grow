@@ -173,3 +173,122 @@ All colors MUST be HSL.
     transform-origin: bottom left;
   }
 }
+
+/* Palette extensions and motion tuning for Auth background */
+:root {
+  --palette-violet: 268 80% 72%; /* soft violet */
+  --palette-cyan: 188 86% 56%;   /* bright cyan */
+  --palette-mint: 160 62% 72%;   /* mint */
+  --palette-amber: 38 92% 68%;   /* pastel amber */
+  --grain-opacity: 0.08;         /* light theme grain */
+  --grain-contrast: 1.1;         /* slightly higher contrast */
+  --bg-saturation: 1.2;          /* ~120% saturation */
+}
+.dark {
+  --grain-opacity: 0.10;         /* a bit stronger in dark */
+  --grain-contrast: 1.05;        /* reduce contrast a touch */
+}
+
+/* Keyframes for smooth, slow motion */
+@keyframes rotate-slow {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+@keyframes blob-drift {
+  0% { transform: translate3d(0, 0, 0) scale(1); }
+  50% { transform: translate3d(6%, -4%, 0) scale(1.04); }
+  100% { transform: translate3d(-4%, 3%, 0) scale(1); }
+}
+
+@layer components {
+  /* Layered background container */
+  .respira-auth-bg {
+    position: absolute;
+    inset: 0;
+    pointer-events: none;
+    isolation: isolate;
+    z-index: 0;
+    overflow: hidden;
+  }
+
+  /* 1) Animated gradient layer (conic + radial for depth) */
+  .respira-auth-bg .layer-gradient {
+    position: absolute;
+    inset: -10%;
+    background:
+      radial-gradient(1200px circle at 20% 10%, hsl(var(--palette-cyan) / 0.18), transparent 60%),
+      radial-gradient(900px circle at 80% 90%, hsl(var(--palette-violet) / 0.16), transparent 60%),
+      conic-gradient(from 0deg,
+        hsl(var(--palette-violet) / 0.18),
+        hsl(var(--palette-cyan) / 0.16),
+        hsl(var(--palette-mint) / 0.14),
+        hsl(var(--palette-amber) / 0.14),
+        hsl(var(--palette-violet) / 0.18)
+      );
+    background-size: 140% 140%;
+    filter: saturate(var(--bg-saturation)) contrast(var(--grain-contrast));
+    animation: rotate-slow 40s ease-in-out infinite;
+    transform-origin: 50% 50%;
+  }
+
+  /* 2) Blurred drifting blobs */
+  .respira-auth-bg .layer-blobs {
+    position: absolute;
+    inset: 0;
+    filter: blur(70px) saturate(var(--bg-saturation));
+  }
+  .respira-auth-bg .blob {
+    position: absolute;
+    border-radius: 50%;
+    width: 45vw;
+    max-width: 700px;
+    aspect-ratio: 1 / 1;
+    opacity: 0.6;
+    will-change: transform;
+    animation: blob-drift 32s ease-in-out infinite alternate;
+  }
+  .blob--1 { left: -10vw; top: -8vh; background: radial-gradient(circle at 30% 30%, hsl(var(--palette-violet) / 0.35), hsl(var(--palette-cyan) / 0.25)); }
+  .blob--2 { right: -12vw; top: 20vh; animation-duration: 36s; background: radial-gradient(circle at 70% 40%, hsl(var(--palette-mint) / 0.35), hsl(var(--palette-amber) / 0.22)); }
+  .blob--3 { left: 10vw; bottom: -12vh; animation-duration: 40s; background: radial-gradient(circle at 40% 60%, hsl(var(--palette-cyan) / 0.30), hsl(var(--palette-violet) / 0.20)); }
+  .blob--4 { right: 5vw; bottom: -10vh; animation-duration: 28s; background: radial-gradient(circle at 60% 30%, hsl(var(--palette-amber) / 0.30), hsl(var(--palette-mint) / 0.20)); }
+
+  /* 3) Grain overlay (very subtle) */
+  .respira-auth-bg .layer-grain {
+    position: absolute; inset: 0;
+    opacity: var(--grain-opacity);
+    background-image:
+      repeating-linear-gradient(0deg, hsl(0 0% 100% / 0.02) 0 1px, transparent 1px 2px),
+      repeating-linear-gradient(90deg, hsl(0 0% 0% / 0.02) 0 1px, transparent 1px 2px);
+    mix-blend-mode: overlay;
+    pointer-events: none;
+  }
+
+  /* 4) Particles canvas */
+  .respira-auth-bg .particles-canvas {
+    position: absolute; inset: 0; width: 100%; height: 100%;
+    filter: contrast(1.05) saturate(1.05);
+  }
+
+  /* Glass card utility for content surfaces */
+  .glass-card {
+    background-color: hsl(var(--background) / 0.55);
+    backdrop-filter: blur(16px) saturate(120%);
+    -webkit-backdrop-filter: blur(16px) saturate(120%);
+    border: 1px solid hsl(var(--border) / 0.6);
+    border-radius: 20px;
+    box-shadow: var(--shadow-elevated);
+  }
+  .dark .glass-card {
+    background-color: hsl(var(--background) / 0.35);
+    border-color: hsl(var(--border) / 0.5);
+  }
+}
+
+/* Reduced motion: turn off animations, keep a calm static background */
+@media (prefers-reduced-motion: reduce) {
+  .respira-auth-bg .layer-gradient,
+  .respira-auth-bg .blob {
+    animation: none !important;
+  }
+  .respira-auth-bg .particles-canvas { display: none !important; }
+}

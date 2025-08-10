@@ -8,7 +8,7 @@ import { Label } from "@/components/ui/label";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { toast } from "@/hooks/use-toast";
 import { supabase } from "@/integrations/supabase/client";
-
+import RelaxBackground from "@/components/RelaxBackground";
 const Auth = () => {
   const navigate = useNavigate();
   // Connexion (email/password)
@@ -146,14 +146,14 @@ const Auth = () => {
         <meta name="description" content="Connectez-vous ou inscrivez-vous à Respira. Connexion par email ou vérification par SMS." />
         <link rel="canonical" href={`${window.location.origin}/auth`} />
       </Helmet>
-      <div className="absolute inset-0 calm-animated-bg calm-overlay" aria-hidden="true" />
-      <main className="relative">
+      <RelaxBackground />
+      <main className="relative z-10">
         <section className="container mx-auto px-4 pt-16 md:pt-24 text-center animate-fade-in">
           <h1 className="text-3xl md:text-4xl font-bold tracking-tight">Respira</h1>
           <p className="mt-3 text-muted-foreground">Un espace apaisant, sécurisé et respectueux de votre confidentialité.</p>
         </section>
         <article className="container mx-auto py-8 md:py-12 max-w-md">
-        <Card className="shadow-sm">
+        <Card className="glass-card shadow-lg">
           <CardHeader>
             <CardTitle className="text-2xl">Accéder à votre espace</CardTitle>
           </CardHeader>
