@@ -108,7 +108,9 @@ async function generateAnswerViaEdge(model: string, theme: string, history: Chat
     },
   });
   if (error) {
-    throw new Error(error.message || "Edge function error");
+    const details = (data as any)?.details || (data as any)?.error;
+    const msg = typeof details === "string" ? details : details ? JSON.stringify(details) : error.message;
+    throw new Error(msg || "Edge function error");
   }
   const answer = (data as any)?.answer as string;
   if (!answer) throw new Error("No answer returned");
@@ -206,9 +208,17 @@ export default function AIAssistantStub() {
       speak(answer);
     } catch (err: any) {
       console.error(err);
+      const msg = String(err?.message || "");
+      let description = "Le service est momentanément indisponible. Veuillez réessayer.";
+      const lower = msg.toLowerCase();
+      if (lower.includes("insufficient_quota") || lower.includes("quota")) {
+        description = "Notre quota OpenAI est épuisé. Nous rétablissons le service rapidement.";
+      } else if (lower.includes("invalid_api_key")) {
+        description = "La clé serveur est invalide. L’équipe corrige le problème.";
+      }
       toast({
         title: "Erreur IA",
-        description: "Le service est momentanément indisponible. Veuillez réessayer.",
+        description,
       });
     } finally {
       setIsLoading(false);
