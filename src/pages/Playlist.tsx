@@ -1,4 +1,5 @@
 import { Helmet } from "react-helmet-async";
+import { useMemo } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface Track { title: string; src: string; source: string }
@@ -47,6 +48,14 @@ const THEMES: Record<string, Track[]> = {
 };
 
 export default function Playlist() {
+  const support = useMemo(() => {
+    if (typeof window === "undefined") return { ogg: true, mp3: true };
+    const a = document.createElement("audio");
+    return {
+      ogg: !!a.canPlayType('audio/ogg; codecs="vorbis"'),
+      mp3: !!a.canPlayType('audio/mpeg;')
+    };
+  }, []);
   return (
     <section className="space-y-6">
       <Helmet>
@@ -66,10 +75,24 @@ export default function Playlist() {
                   <CardTitle className="text-lg">{t.title}</CardTitle>
                 </CardHeader>
                 <CardContent>
-                  <audio controls preload="none" className="w-full" crossOrigin="anonymous">
-                    <source src={t.src} type="audio/mpeg" />
-                    Votre navigateur ne supporte pas l'audio HTML5.
-                  </audio>
+                  {(() => {
+                      const isOgg = t.src.endsWith(".ogg");
+                      const mime = isOgg ? "audio/ogg" : "audio/mpeg";
+                      if (isOgg && !support.ogg) {
+                        return (
+                          <div className="text-xs text-muted-foreground">
+                            Format OGG non supporté par votre navigateur. Choisissez une piste MP3.
+                          </div>
+                        );
+                      }
+                      return (
+                        <audio controls playsInline preload="metadata" className="w-full" crossOrigin="anonymous">
+                          <source src={t.src} type={mime} />
+                          Votre navigateur ne supporte pas l'audio HTML5.
+                        </audio>
+                      );
+                    })()}
+
                   <p className="text-xs text-muted-foreground mt-2">Source: {t.source}</p>
                 </CardContent>
               </Card>
