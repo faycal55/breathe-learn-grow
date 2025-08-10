@@ -13,17 +13,17 @@ import {
 } from "@/components/ui/sidebar";
 
 const items = [
-  { title: "Mes consultations", url: "/dashboard#consultations", icon: Bot },
-  { title: "Respiration", url: "/dashboard#breathing", icon: Heart },
-  { title: "Playlist apaisante", url: "/dashboard#playlist", icon: Headphones },
-  { title: "Bibliothèque", url: "/dashboard#library", icon: BookOpen },
-  { title: "Abonnement", url: "/dashboard#subscription", icon: Inbox },
+  { title: "Mes consultations", url: "/dashboard/consultations", icon: Bot },
+  { title: "Respiration", url: "/dashboard/breathing", icon: Heart },
+  { title: "Playlist apaisante", url: "/dashboard/playlist", icon: Headphones },
+  { title: "Bibliothèque", url: "/dashboard/library", icon: BookOpen },
+  { title: "Abonnement", url: "/dashboard/subscription", icon: Inbox },
 ];
 
 export function AppSidebar() {
   return (
     <Sidebar collapsible="icon">
-      <SidebarTrigger className="m-2 self-end" />
+      
       <SidebarContent>
         <SidebarGroup>
           <SidebarGroupLabel>Menu</SidebarGroupLabel>
