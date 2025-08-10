@@ -3,20 +3,26 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface Track { title: string; src: string; source: string }
 
-// Streaming externe (FreePD - CC0). Les liens pointent vers les fichiers distants.
+// Streaming externe (FreePD - CC0) et fichiers locaux (public/audio)
 const THEMES: Record<string, Track[]> = {
   "Sons pour dormir (apaisants)": [
-    { title: "Deep Tones", src: "https://freepd.com/music/Deep%20Tones.mp3", source: "freepd.com (CC0)" },
-    { title: "Aquarium", src: "https://freepd.com/music/Aquarium.mp3", source: "freepd.com (CC0)" },
+    { title: "Deep Tones", src: "/audio/deep-tones.mp3", source: "Local (freepd.com, CC0)" },
+    { title: "Aquarium", src: "/audio/aquarium.mp3", source: "Local (freepd.com, CC0)" },
   ],
   "Sons motivants": [
-    { title: "Connecting Rainbows", src: "https://freepd.com/music/Connecting%20Rainbows.mp3", source: "freepd.com (CC0)" },
-    { title: "Consecrated Ground", src: "https://freepd.com/music/Consecrated%20Ground.mp3", source: "freepd.com (CC0)" },
+    { title: "Connecting Rainbows", src: "/audio/connecting-rainbows.mp3", source: "Local (freepd.com, CC0)" },
+    { title: "Consecrated Ground", src: "/audio/consecrated-ground.mp3", source: "Local (freepd.com, CC0)" },
   ],
-  "Sons inspirants": [
-    { title: "Aquarium", src: "https://freepd.com/music/Aquarium.mp3", source: "freepd.com (CC0)" },
-    { title: "Deep Tones", src: "https://freepd.com/music/Deep%20Tones.mp3", source: "freepd.com (CC0)" },
-  ],
+  // Thèmes à compléter (streams CC0 à venir)
+  "Pluie (rain)": [],
+  "Mer (vagues)": [],
+  "Vent": [],
+  "Forêt": [],
+  "Cheminée": [],
+  "Ville (ambiance urbaine)": [],
+  "Avion (cabine)": [],
+  "Yoga / Relaxation": [],
+  "Rêverie / Inspirant": [],
 };
 
 export default function Playlist() {
@@ -24,12 +30,12 @@ export default function Playlist() {
     <section className="space-y-6">
       <Helmet>
         <title>Playlist apaisante par thèmes | Respira</title>
-        <meta name="description" content="Écoutez des sons libres par thème: dormir, motivation, inspiration." />
+        <meta name="description" content="Sons apaisants locaux (CC0) + streaming: pluie, mer, vent, forêt, cheminée, ville, avion, yoga." />
         <link rel="canonical" href="/dashboard/playlist" />
       </Helmet>
       <h1 className="text-2xl font-semibold">Playlist apaisante par thèmes</h1>
-      <p className="text-sm text-muted-foreground">Streaming direct depuis FreePD (CC0). J’ajouterai pluie/mer/vent/forêt/cheminée (30 min) via Internet Archive ensuite.</p>
-      {Object.entries(THEMES).map(([theme, tracks]) => (
+      <p className="text-sm text-muted-foreground">Lecture depuis des fichiers locaux (CC0) et, bientôt, streaming 30 min: pluie, mer, vent, forêt, cheminée, ville, avion, yoga.</p>
+      {Object.entries(THEMES).filter(([, tracks]) => tracks.length > 0).map(([theme, tracks]) => (
         <div key={theme} className="space-y-3">
           <h2 className="text-xl font-semibold">{theme}</h2>
           <div className="grid md:grid-cols-2 gap-4">
