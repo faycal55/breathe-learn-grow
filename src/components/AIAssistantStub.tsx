@@ -458,11 +458,30 @@ useEffect(() => {
       const answer = await generateAnswerViaEdge(model, themeLabel, language, messages, text);
       const botMsg: ChatMessage = { id: crypto.randomUUID(), role: "assistant", content: answer };
       setMessages((prev) => [...prev, botMsg]);
-      // Persist both messages if conversation is selected
-      if (conversationId) {
+      // Persist both messages; create a conversation if needed
+      let convId = conversationId;
+      if (!convId) {
+        const { data: sess } = await supabase.auth.getSession();
+        const uid = sess?.session?.user?.id;
+        if (!uid) {
+          toast({ title: "Non connecté", description: "Veuillez vous connecter pour sauvegarder l'historique.", variant: "destructive" });
+        } else {
+          const title = `Consultation du ${new Date().toLocaleDateString()}`;
+          const { data: created, error: cErr } = await supabase
+            .from("conversations")
+            .insert({ user_id: uid, title })
+            .select("id")
+            .single();
+          if (!cErr && created) {
+            convId = created.id as string;
+            toast({ title: "Nouvelle consultation", description: "Historique activé pour cette session." });
+          }
+        }
+      }
+      if (convId) {
         await supabase.from("messages").insert([
-          { conversation_id: conversationId, role: "user", content: text },
-          { conversation_id: conversationId, role: "assistant", content: answer },
+          { conversation_id: convId, role: "user", content: text },
+          { conversation_id: convId, role: "assistant", content: answer },
         ]);
       }
       speak(answer);

@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Helmet } from "react-helmet-async";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -16,6 +16,7 @@ export default function Consultations() {
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [loadingConv, setLoadingConv] = useState(false);
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const autoCreatedRef = useRef(false);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_e, session) => {
@@ -40,8 +41,30 @@ export default function Consultations() {
     if (error) {
       toast({ title: "Erreur", description: error.message, variant: "destructive" });
     } else {
-      setConversations(data || []);
-      if (!selectedId && (data?.length ?? 0) > 0) setSelectedId(data![0].id);
+      const list = data || [];
+      if (list.length === 0 && !autoCreatedRef.current) {
+        // Auto-crée une consultation si aucune n'existe afin d'assurer la persistance de l'historique
+        autoCreatedRef.current = true;
+        const title = `Consultation du ${new Date().toLocaleDateString()}`;
+        const { data: created, error: cErr } = await supabase
+          .from("conversations")
+          .insert({ user_id: userId, title })
+          .select("id")
+          .single();
+        if (!cErr && created) {
+          setSelectedId(created.id);
+          const { data: d2 } = await supabase
+            .from("conversations")
+            .select("id,title,created_at")
+            .eq("user_id", userId)
+            .order("updated_at", { ascending: false });
+          setConversations(d2 || []);
+          setLoadingConv(false);
+          return;
+        }
+      }
+      setConversations(list);
+      if (!selectedId && list.length > 0) setSelectedId(list[0].id);
     }
     setLoadingConv(false);
   };
