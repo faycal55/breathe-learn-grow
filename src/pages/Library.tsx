@@ -98,7 +98,7 @@ export default function Library() {
         <meta name="description" content="Œuvres en langue française, domaine public, classées par thèmes (≥5 par thème)." />
         <link rel="canonical" href="/dashboard/library" />
       </Helmet>
-      <h1 className="text-2xl font-semibold">Bibliothèque thématique (FR – domaine public)</h1>
+      <h1 className="text-2xl font-semibold">Bibliothèque</h1>
       <p className="text-sm text-muted-foreground">Sélection d’œuvres classées par thèmes.</p>
       <div className="grid md:grid-cols-2 gap-4">
         {Object.entries(CATEGORIES).map(([theme, items]) => <Card key={theme}>
