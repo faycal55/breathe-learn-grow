@@ -153,4 +153,23 @@ All colors MUST be HSL.
       radial-gradient(600px circle at 80% 90%, hsl(var(--accent) / 0.18), transparent 60%);
     mix-blend-mode: normal;
   }
+
+  /* Animated underline link for a subtle interactive feel */
+  .story-link { position: relative; display: inline-block; }
+  .story-link::after {
+    content: "";
+    position: absolute;
+    left: 0;
+    bottom: -2px;
+    width: 100%;
+    height: 2px;
+    background: hsl(var(--primary));
+    transform: scaleX(0);
+    transform-origin: bottom right;
+    transition: transform 0.3s ease;
+  }
+  .story-link:hover::after {
+    transform: scaleX(1);
+    transform-origin: bottom left;
+  }
 }

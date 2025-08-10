@@ -5,10 +5,13 @@ import ThematicLibrary from "@/components/ThematicLibrary";
 import { Button } from "@/components/ui/button";
 import { supabase } from "@/integrations/supabase/client";
 import { toast } from "@/hooks/use-toast";
+import { Menu } from "lucide-react";
+import logoWordmark from "@/assets/respira-logo-wordmark.png";
 
 const Index = () => {
   const heroRef = useRef<HTMLDivElement | null>(null);
   const [isAuthed, setIsAuthed] = useState(false);
+  const [openNav, setOpenNav] = useState(false);
 
   useEffect(() => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
@@ -40,15 +43,24 @@ const Index = () => {
     <div className="min-h-screen bg-background text-foreground">
       <header className="sticky top-0 z-10 backdrop-blur supports-[backdrop-filter]:bg-background/70 border-b">
         <nav className="container mx-auto flex items-center justify-between py-3">
-          <a href="#" className="font-semibold">Respira</a>
+          <a href="/" className="flex items-center gap-2">
+            <img src={logoWordmark} alt="Logo Respira, application de relaxation" className="h-8 md:h-9" />
+          </a>
+          <button
+            className="md:hidden p-2 rounded-md border hover:bg-muted/50"
+            aria-label="Menu"
+            onClick={() => setOpenNav((v) => !v)}
+          >
+            <Menu className="h-5 w-5" />
+          </button>
           <div className="hidden md:flex items-center gap-6 text-sm text-muted-foreground">
-            <a href="#breathing">Respiration</a>
-            <a href="#assistant">Aide IA</a>
-            <a href="#library">Bibliothèque</a>
-            <a href="#pricing">Tarif</a>
-            <a href="#references">Références</a>
+            <a href="#breathing" className="story-link">Respiration</a>
+            <a href="#assistant" className="story-link">Aide IA</a>
+            <a href="#library" className="story-link">Bibliothèque</a>
+            <a href="#pricing" className="story-link">Tarif</a>
+            <a href="#references" className="story-link">Références</a>
           </div>
-          <div className="flex gap-2">
+          <div className="hidden md:flex gap-2">
             {!isAuthed ? (
               <a href="/auth"><Button variant="secondary">Se connecter</Button></a>
             ) : (
@@ -57,13 +69,32 @@ const Index = () => {
             <a href="#breathing"><Button>Commencer</Button></a>
           </div>
         </nav>
+        {openNav && (
+          <div className="md:hidden border-t bg-background/95 backdrop-blur animate-slide-in-right">
+            <div className="container mx-auto py-3 flex flex-col gap-3">
+              <a href="#breathing" onClick={() => setOpenNav(false)} className="text-sm">Respiration</a>
+              <a href="#assistant" onClick={() => setOpenNav(false)} className="text-sm">Aide IA</a>
+              <a href="#library" onClick={() => setOpenNav(false)} className="text-sm">Bibliothèque</a>
+              <a href="#pricing" onClick={() => setOpenNav(false)} className="text-sm">Tarif</a>
+              <a href="#references" onClick={() => setOpenNav(false)} className="text-sm">Références</a>
+              <div className="flex gap-2 pt-2">
+                {!isAuthed ? (
+                  <a className="flex-1" href="/auth"><Button variant="secondary" className="w-full">Se connecter</Button></a>
+                ) : (
+                  <Button variant="secondary" onClick={() => { setOpenNav(false); handleSignOut(); }} className="flex-1">Se déconnecter</Button>
+                )}
+                <a className="flex-1" href="#breathing"><Button className="w-full">Commencer</Button></a>
+              </div>
+            </div>
+          </div>
+        )}
       </header>
 
       <main>
         <section
           ref={heroRef}
           onMouseMove={handlePointerMove}
-          className="signature-gradient hero-surface border-b"
+          className="hero-surface calm-animated-bg border-b"
         >
           <div className="container mx-auto grid gap-10 py-16 md:py-24 md:grid-cols-2 items-center">
             <div className="space-y-6 animate-[fade-up_0.6s_ease]">
