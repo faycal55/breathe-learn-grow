@@ -11,6 +11,7 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Form, FormControl, FormDescription, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { toast } from "@/hooks/use-toast";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 const schema = z.object({
   startDate: z.string(),
   days: z.number().min(1).max(14),
@@ -22,7 +23,9 @@ const schema = z.object({
   sleepStart: z.string(),
   sleepEnd: z.string(),
   commitments: z.string().optional(),
-  goals: z.string().optional()
+  goals: z.string().optional(),
+  language: z.enum(['fr','en','ar']),
+  theme: z.string()
 });
 type FormValues = z.infer<typeof schema>;
 type PlanEntry = {
@@ -38,6 +41,24 @@ type PlanResponse = {
   plan: PlanEntry[];
   notes?: string;
 };
+
+type Theme = { id: string; fr: string; en: string; ar: string };
+const THEMES: Theme[] = [
+  { id: "anxiety", fr: "Anxiété", en: "Anxiety", ar: "القلق" },
+  { id: "loneliness", fr: "Solitude", en: "Loneliness", ar: "الوحدة" },
+  { id: "grief", fr: "Deuil", en: "Grief", ar: "الفقد/الحِداد" },
+  { id: "breakup", fr: "Séparation", en: "Breakup", ar: "انفصال" },
+  { id: "burnout", fr: "Burn-out", en: "Burnout", ar: "الإرهاق" },
+  { id: "self-esteem", fr: "Estime de soi", en: "Self‑esteem", ar: "تقدير الذات" },
+  { id: "resilience", fr: "Résilience", en: "Resilience", ar: "المرونة النفسية" },
+  { id: "work-stress", fr: "Stress au travail", en: "Work stress", ar: "ضغط العمل" },
+  { id: "sleep", fr: "Trouble du sommeil", en: "Sleep issues", ar: "مشكلات النوم" },
+  { id: "other", fr: "Autre", en: "Other", ar: "أخرى" },
+];
+
+type Language = 'fr'|'en'|'ar';
+const labelFor = (t: Theme, lang: Language) => (lang==='fr'?t.fr:lang==='en'?t.en:t.ar);
+
 const toISODate = (d: Date) => d.toISOString().slice(0, 10);
 export default function Planning() {
   const [loading, setLoading] = useState(false);
@@ -81,19 +102,21 @@ export default function Planning() {
   }, []);
   const form = useForm<FormValues>({
     resolver: zodResolver(schema),
-    defaultValues: {
-      startDate: toISODate(new Date()),
-      days: 3,
-      workWeekStart: "09:00",
-      workWeekEnd: "17:00",
-      weekendWork: false,
-      weekendStart: "",
-      weekendEnd: "",
-      sleepStart: "23:00",
-      sleepEnd: "07:00",
-      commitments: "",
-      goals: ""
-    }
+  defaultValues: {
+    startDate: toISODate(new Date()),
+    days: 3,
+    workWeekStart: "09:00",
+    workWeekEnd: "17:00",
+    weekendWork: false,
+    weekendStart: "",
+    weekendEnd: "",
+    sleepStart: "23:00",
+    sleepEnd: "07:00",
+    commitments: "",
+    goals: "",
+    language: 'fr',
+    theme: 'anxiety'
+  }
   });
   const onSubmit = async (values: FormValues) => {
     setLoading(true);
@@ -135,17 +158,18 @@ export default function Planning() {
         },
         commitments: values.commitments || ""
       };
-      const {
-        data,
-        error
-      } = await supabase.functions.invoke("ai-scheduler", {
+      const lang = values.language as Language;
+      const themeLabel = THEMES.find(t => t.id === values.theme)?.[lang] ?? values.theme;
+      const { data, error } = await supabase.functions.invoke("ai-scheduler", {
         body: {
           startDate: values.startDate,
           days: values.days,
           timezone: tz,
           availability,
           goals: values.goals,
-          situationContext
+          situationContext,
+          language: values.language,
+          theme: themeLabel
         }
       });
       if (error) throw error;
@@ -211,6 +235,42 @@ export default function Planning() {
                     </FormControl>
                     <FormDescription>3 à 14 jours recommandés.</FormDescription>
                   </FormItem>} />
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                  <FormField name="language" control={form.control} render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Langue</FormLabel>
+                      <Select value={field.value} onValueChange={field.onChange}>
+                        <SelectTrigger className="w-full mt-1">
+                          <SelectValue placeholder="Choisir la langue" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="fr">Français</SelectItem>
+                          <SelectItem value="en">English</SelectItem>
+                          <SelectItem value="ar">العربية</SelectItem>
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+
+                  <FormField name="theme" control={form.control} render={({ field }) => (
+                    <FormItem>
+                      <FormLabel>Thème principal</FormLabel>
+                      <Select value={field.value} onValueChange={field.onChange}>
+                        <SelectTrigger className="w-full mt-1">
+                          <SelectValue placeholder="Choisir un thème" />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {THEMES.map(t => (
+                            <SelectItem key={t.id} value={t.id}>{labelFor(t, form.getValues('language') as Language)}</SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                      <FormMessage />
+                    </FormItem>
+                  )} />
+                </div>
 
                 <div className="grid grid-cols-2 gap-3">
                   <FormField name="workWeekStart" control={form.control} render={({

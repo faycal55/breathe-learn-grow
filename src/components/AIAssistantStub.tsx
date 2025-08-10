@@ -35,20 +35,42 @@ interface ChatMessage {
   content: string;
 }
 
-const THEMES = [
-  "Anxiété",
-  "Solitude",
-  "Deuil",
-  "Séparation",
-  "Burn-out",
-  "Estime de soi",
-  "Résilience",
-  "Stress au travail",
-  "Trouble du sommeil",
-  "Autre",
+type Theme = { id: string; fr: string; en: string; ar: string };
+
+const THEMES: Theme[] = [
+  { id: "anxiety", fr: "Anxiété", en: "Anxiety", ar: "القلق" },
+  { id: "loneliness", fr: "Solitude", en: "Loneliness", ar: "الوحدة" },
+  { id: "grief", fr: "Deuil", en: "Grief", ar: "الفقد/الحِداد" },
+  { id: "breakup", fr: "Séparation", en: "Breakup", ar: "انفصال" },
+  { id: "burnout", fr: "Burn-out", en: "Burnout", ar: "الإرهاق" },
+  { id: "self-esteem", fr: "Estime de soi", en: "Self‑esteem", ar: "تقدير الذات" },
+  { id: "resilience", fr: "Résilience", en: "Resilience", ar: "المرونة النفسية" },
+  { id: "work-stress", fr: "Stress au travail", en: "Work stress", ar: "ضغط العمل" },
+  { id: "sleep", fr: "Trouble du sommeil", en: "Sleep issues", ar: "مشكلات النوم" },
+  { id: "other", fr: "Autre", en: "Other", ar: "أخرى" },
 ];
 
-function buildSystemPrompt(theme: string) {
+function buildSystemPrompt(theme: string, lang: 'fr' | 'en' | 'ar') {
+  if (lang === 'en') {
+    return `You are an empathetic, cautious clinical psychologist.
+- Always start by validating the user's emotion.
+- Ask 1–2 short, open questions to clarify, one at a time.
+- Offer concrete tools (slow breathing 5–6 bpm, 5-4-3-2-1 grounding, light cognitive reframing, journaling).
+- Include mindfulness elements (breath anchoring, non-judgment, compassion).
+- Mention your limits: no medical diagnosis; encourage consulting a professional if red flags arise (suicidal ideation, danger, severe symptoms).
+- Adapt tone and examples to the theme: ${theme}.
+- Respond in English, 5–8 sentences, warm and structured.`;
+  }
+  if (lang === 'ar') {
+    return `أنت أخصائي نفسي سريري متعاطف وحذر.
+- ابدأ دائمًا بتأكيد مشاعر المستخدم.
+- اطرح 1 إلى 2 أسئلة مفتوحة قصيرة، واحدًا تلو الآخر.
+- قدّم أدوات عملية (تنفّس بطيء 5–6 مرات/الدقيقة، تقنية التأريض 5‑4‑3‑2‑1، إعادة صياغة معرفية خفيفة، كتابة يوميات).
+- أدمج عناصر من اليقظة الذهنية (التركيز على التنفّس، عدم الحكم، التعاطف).
+- اذكر حدودك: لا تقدّم تشخيصًا طبيًا، وشجّع على استشارة مختص عند وجود مؤشرات خطر (أفكار انتحارية، تعريض النفس للخطر، أعراض شديدة).
+- عدّل النبرة والأمثلة حسب الموضوع: ${theme}.
+- أجب بالعربية في 5 إلى 8 جمل، بنبرة دافئة ومنظمة.`;
+  }
   return `Tu es un psychologue clinicien empathique et prudent.
 - Commence toujours par valider l'émotion de l'utilisateur.
 - Pose 1 à 2 questions ouvertes courtes pour mieux comprendre, une à la fois.
@@ -78,8 +100,8 @@ function isFemaleVoice(voiceId: string) {
   return true;
 }
 
-async function generateOpenAIAnswer(apiKey: string, model: string, theme: string, history: ChatMessage[], userText: string) {
-  const system = buildSystemPrompt(theme);
+async function generateOpenAIAnswer(apiKey: string, model: string, themeLabel: string, language: 'fr'|'en'|'ar', history: ChatMessage[], userText: string) {
+  const system = buildSystemPrompt(themeLabel, language);
   const messages = [
     { role: "system", content: system },
     ...history.map((m) => ({ role: m.role, content: m.content })),
@@ -109,11 +131,12 @@ async function generateOpenAIAnswer(apiKey: string, model: string, theme: string
   return content;
 }
 
-async function generateAnswerViaEdge(model: string, theme: string, history: ChatMessage[], userText: string) {
+async function generateAnswerViaEdge(model: string, themeLabel: string, language: 'fr'|'en'|'ar', history: ChatMessage[], userText: string) {
   const { data, error } = await supabase.functions.invoke("ai-chat", {
     body: {
       model,
-      theme,
+      theme: themeLabel,
+      language,
       history,
       userText,
     },
@@ -129,7 +152,8 @@ async function generateAnswerViaEdge(model: string, theme: string, history: Chat
 }
 
 export default function AIAssistantStub({ conversationId }: { conversationId?: string }) {
-  const [theme, setTheme] = useState<string>(THEMES[0]);
+  const [theme, setTheme] = useState<string>(THEMES[0].id);
+  const [language, setLanguage] = useState<'fr'|'en'|'ar'>(() => (localStorage.getItem("ai.lang") as any) || 'fr');
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -225,10 +249,14 @@ export default function AIAssistantStub({ conversationId }: { conversationId?: s
     localStorage.setItem("ai.voiceEnabled", String(voiceEnabled));
   }, [voiceEnabled]);
 
-  useEffect(() => {
-    localStorage.setItem("ai.tts.provider", ttsProvider);
-    localStorage.setItem("ai.tts.voiceId", elevenVoiceId);
-  }, [ttsProvider, elevenVoiceId]);
+useEffect(() => {
+  localStorage.setItem("ai.tts.provider", ttsProvider);
+  localStorage.setItem("ai.tts.voiceId", elevenVoiceId);
+}, [ttsProvider, elevenVoiceId]);
+
+useEffect(() => {
+  localStorage.setItem("ai.lang", language);
+}, [language]);
 
   // On mobile, privilégier ElevenLabs et demander un déblocage audio
   useEffect(() => {
@@ -296,9 +324,12 @@ export default function AIAssistantStub({ conversationId }: { conversationId?: s
       }
       // Web Speech API fallback
       const utter = new SpeechSynthesisUtterance(text);
-      utter.lang = "fr-FR";
+      utter.lang = language === 'fr' ? 'fr-FR' : (language === 'en' ? 'en-US' : 'ar-SA');
       const voices = window.speechSynthesis.getVoices();
-      const v = voices.find((vv) => vv.lang?.toLowerCase().startsWith("fr"));
+      const v = voices.find((vv) => {
+        const target = utter.lang.split('-')[0];
+        return vv.lang?.toLowerCase().startsWith(target);
+      });
       if (v) utter.voice = v;
       utter.onstart = () => setIsSpeaking(true);
       utter.onend = () => setIsSpeaking(false);
@@ -423,7 +454,8 @@ export default function AIAssistantStub({ conversationId }: { conversationId?: s
 
     setIsLoading(true);
     try {
-      const answer = await generateAnswerViaEdge(model, theme, messages, text);
+      const themeLabel = (THEMES.find(t => t.id === theme) as any)?.[language] ?? theme;
+      const answer = await generateAnswerViaEdge(model, themeLabel, language, messages, text);
       const botMsg: ChatMessage = { id: crypto.randomUUID(), role: "assistant", content: answer };
       setMessages((prev) => [...prev, botMsg]);
       // Persist both messages if conversation is selected
@@ -469,18 +501,33 @@ export default function AIAssistantStub({ conversationId }: { conversationId?: s
       <CardContent className="space-y-4">
         {/* Controls */}
         <div className="flex flex-col md:flex-row md:items-center gap-3">
-          <div className="flex-1">
-            <Label className="text-sm">Thème</Label>
-            <Select value={theme} onValueChange={setTheme}>
-              <SelectTrigger className="w-full mt-1">
-                <SelectValue placeholder="Choisir un thème" />
-              </SelectTrigger>
-              <SelectContent>
-                {THEMES.map((t) => (
-                  <SelectItem key={t} value={t}>{t}</SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
+          <div className="flex-1 grid grid-cols-1 md:grid-cols-2 gap-3">
+            <div>
+              <Label className="text-sm">Langue</Label>
+              <Select value={language} onValueChange={(val) => setLanguage(val as any)}>
+                <SelectTrigger className="w-full mt-1">
+                  <SelectValue placeholder="Choisir la langue" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="fr">Français</SelectItem>
+                  <SelectItem value="en">English</SelectItem>
+                  <SelectItem value="ar">العربية</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div>
+              <Label className="text-sm">Thème</Label>
+              <Select value={theme} onValueChange={setTheme}>
+                <SelectTrigger className="w-full mt-1">
+                  <SelectValue placeholder="Choisir un thème" />
+                </SelectTrigger>
+                <SelectContent>
+                  {THEMES.map((t) => (
+                    <SelectItem key={t.id} value={t.id}>{(t as any)[language]}</SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
 
           <div className="flex items-center gap-3">
@@ -578,7 +625,7 @@ export default function AIAssistantStub({ conversationId }: { conversationId?: s
                   {m.role === "assistant" && (
                     <span className="absolute -left-1.5 bottom-3 w-3 h-3 bg-muted border-l border-b rotate-45 rounded-sm" aria-hidden="true" />
                   )}
-                  <p className="text-sm whitespace-pre-wrap">{m.content}</p>
+                  <p dir={language==='ar' ? 'rtl' : 'ltr'} className="text-sm whitespace-pre-wrap">{m.content}</p>
                 </div>
                 {m.role === "user" && (
                   <div className="shrink-0 opacity-0">

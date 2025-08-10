@@ -82,6 +82,8 @@ serve(async (req) => {
       availability, // { work: Array<{ day: string, start: string, end: string }>, sleep: { start: string, end: string }, commitments?: string }
       goals, // optional string
       situationContext, // long string from consultations
+      language = 'fr',
+      theme,
     } = body || {};
 
     if (!startDate || !timezone || !availability) {
@@ -93,16 +95,29 @@ serve(async (req) => {
 
     const cappedDays = Math.min(Number(days ?? 7), 7);
 
-    const userInstruction = `
-Génère un planning horaire personnalisé en français.
+    const lang = String(language || 'fr').toLowerCase().startsWith('en') ? 'en' : (String(language || 'fr').toLowerCase().startsWith('ar') ? 'ar' : 'fr');
+    const startLine = lang === 'en'
+      ? 'Generate a personalized hourly plan in English.'
+      : lang === 'ar'
+      ? 'أنشئ خطة يومية مفصلة باللغة العربية.'
+      : 'Génère un planning horaire personnalisé en français.';
+    const writeClause = lang === 'en'
+      ? 'Write all "activity", "category", "approach", "rationale", and "notes" fields in English.'
+      : lang === 'ar'
+      ? 'اكتب جميع الحقول (النشاط، الفئة، المنهج، المبرر، الملاحظات) بالعربية.'
+      : 'Rédige tous les champs (activité, catégorie, approche, justification, notes) en français.';
+
+    const userInstruction = `${startLine}
 Paramètres utilisateur:
-- Date de début: ${startDate}
-- Nombre de jours: ${cappedDays}
-- Fuseau horaire: ${timezone}
-- Disponibilités: ${JSON.stringify(availability)}
-- Objectifs/préférences: ${goals || "(non précisé)"}
-Contexte de consultation (résumé):\n${(situationContext || "(non fourni)").slice(0, 6000)}
-N’utilise QUE les heures libres (hors travail/sommeil/engagements). Organise par JOUR puis HEURE. Utilise les approches TCC/ACT/DBT/IPT/pleine conscience selon la situation. Retourne uniquement le JSON demandé, sans texte additionnel.`.trim();
+- Date de début / Start date: ${startDate}
+- Nombre de jours / Days: ${cappedDays}
+- Fuseau horaire / Timezone: ${timezone}
+- Thème principal / Theme: ${theme || '(non précisé)'}
+- Disponibilités / Availability: ${JSON.stringify(availability)}
+- Objectifs / Goals: ${goals || '(non précisé)'}
+Contexte de consultation (résumé / summary):\n${(situationContext || '(non fourni)').slice(0, 6000)}
+N’utilise QUE les heures libres (hors travail/sommeil/engagements). Organise par JOUR puis HEURE. ${writeClause}
+Retourne uniquement le JSON demandé, sans texte additionnel.`.trim();
 
     const response = await fetch("https://api.openai.com/v1/chat/completions", {
       method: "POST",
