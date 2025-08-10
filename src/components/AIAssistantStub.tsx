@@ -242,16 +242,47 @@ export default function AIAssistantStub({ conversationId }: { conversationId?: s
 
   const startRecording = async () => {
     try {
-      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-      const mr = new MediaRecorder(stream, { mimeType: "audio/webm" });
+      // Request mic with sensible mobile defaults
+      const stream = await navigator.mediaDevices.getUserMedia({
+        audio: {
+          echoCancellation: true,
+          noiseSuppression: true,
+          autoGainControl: true,
+        },
+      });
+
+      // Pick a mimeType supported by the current browser (iOS Safari prefers audio/mp4)
+      const candidates = [
+        "audio/webm;codecs=opus",
+        "audio/webm",
+        "audio/mp4",
+        "audio/ogg;codecs=opus",
+        "audio/ogg",
+      ];
+      let mimeType = "";
+      for (const t of candidates) {
+        try {
+          if ((window as any).MediaRecorder && MediaRecorder.isTypeSupported(t)) {
+            mimeType = t;
+            break;
+          }
+        } catch {}
+      }
+
+      const options = mimeType ? ({ mimeType } as MediaRecorderOptions) : undefined;
+      const mr = new MediaRecorder(stream, options);
       audioChunksRef.current = [];
+
       mr.ondataavailable = (e) => {
         if (e.data && e.data.size > 0) audioChunksRef.current.push(e.data);
       };
+
       mr.onstop = async () => {
         try {
-          const blob = new Blob(audioChunksRef.current, { type: "audio/webm" });
+          const finalType = mimeType || (audioChunksRef.current[0]?.type ?? "audio/webm");
+          const blob = new Blob(audioChunksRef.current, { type: finalType });
           const base64 = await blobToBase64(blob);
+
           setInput("…transcription en cours…");
           const { data, error } = await supabase.functions.invoke("stt-transcribe", { body: { audio: base64 } });
           if (error) throw new Error(error.message);
@@ -267,21 +298,29 @@ export default function AIAssistantStub({ conversationId }: { conversationId?: s
           toast({ title: "Erreur micro", description: err?.message || "Échec de la transcription" });
         } finally {
           setIsRecording(false);
-          stream.getTracks().forEach(t => t.stop());
+          try { stream.getTracks().forEach((t) => t.stop()); } catch {}
         }
       };
+
       mediaRecorderRef.current = mr;
-      mr.start();
+      // Use a small timeslice so iOS Safari reliably emits dataavailable events
+      mr.start(750);
       setIsRecording(true);
     } catch (e: any) {
       console.error(e);
-      toast({ title: "Micro non disponible", description: e?.message || "Autorisez l'accès au micro" });
+      const msg = e?.name === "NotAllowedError"
+        ? "Autorisez l'accès au micro dans votre navigateur et réessayez."
+        : e?.message || "Micro non disponible";
+      toast({ title: "Micro non disponible", description: msg });
     }
   };
 
   const stopRecording = async () => {
     try {
-      mediaRecorderRef.current?.state !== "inactive" && mediaRecorderRef.current?.stop();
+      if (mediaRecorderRef.current && mediaRecorderRef.current.state !== "inactive") {
+        try { mediaRecorderRef.current.requestData?.(); } catch {}
+        mediaRecorderRef.current.stop();
+      }
     } catch {}
   };
 
@@ -427,7 +466,7 @@ export default function AIAssistantStub({ conversationId }: { conversationId?: s
         </div>
 
         {/* Chat */}
-        <div className="rounded-lg border p-3 h-[360px] overflow-y-auto bg-card/50" role="log" aria-live="polite">
+        <div className="rounded-lg border p-3 h-[50vh] md:h-[360px] overflow-y-auto bg-card/50" role="log" aria-live="polite">
           {messages.length === 0 && !isLoading && (
             <p className="text-sm text-muted-foreground">
               Partagez ce que vous traversez. Le psychologue IA répondra avec empathie et des techniques adaptées.

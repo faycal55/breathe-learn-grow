@@ -14,6 +14,7 @@ import Playlist from "./pages/Playlist";
 import Library from "./pages/Library";
 import Subscription from "./pages/Subscription";
 import Planning from "./pages/Planning";
+import Guides from "./pages/Guides";
 
 const queryClient = new QueryClient();
 
@@ -34,6 +35,7 @@ const App = () => (
               <Route path="playlist" element={<Playlist />} />
               <Route path="library" element={<Library />} />
               <Route path="planning" element={<Planning />} />
+              <Route path="guides" element={<Guides />} />
               <Route path="subscription" element={<Subscription />} />
             </Route>
             <Route path="/auth" element={<Auth />} />
