@@ -26,6 +26,7 @@ import { Send, Settings, Mic, Square } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 import psychFemale from "@/assets/psychologist-female.png";
 import psychMale from "@/assets/psychologist-male.png";
+import { useIsMobile } from "@/hooks/use-mobile";
 
 // Chat message type
 interface ChatMessage {
@@ -142,6 +143,56 @@ export default function AIAssistantStub({ conversationId }: { conversationId?: s
   const mediaRecorderRef = useRef<MediaRecorder | null>(null);
   const audioChunksRef = useRef<Blob[]>([]);
 
+  // Mobile audio playback helpers
+  const isMobile = useIsMobile();
+  const [audioUnlocked, setAudioUnlocked] = useState(false);
+  const audioElRef = useRef<HTMLAudioElement | null>(null);
+  const audioCtxRef = useRef<AudioContext | null>(null);
+
+  const ensureAudioEl = () => {
+    if (!audioElRef.current) {
+      const el = document.createElement("audio");
+      el.setAttribute("playsinline", "");
+      el.preload = "auto";
+      el.style.display = "none";
+      document.body.appendChild(el);
+      audioElRef.current = el;
+    }
+    return audioElRef.current!;
+  };
+
+  const unlockAudio = async () => {
+    try {
+      if (!audioCtxRef.current) {
+        // @ts-ignore - webkit fallback on iOS
+        const Ctx = (window as any).AudioContext || (window as any).webkitAudioContext;
+        audioCtxRef.current = new Ctx();
+      }
+      const ctx = audioCtxRef.current!;
+      await ctx.resume();
+      const buffer = ctx.createBuffer(1, 1, 24000);
+      const src = ctx.createBufferSource();
+      src.buffer = buffer;
+      src.connect(ctx.destination);
+      src.start(0);
+      src.stop(0);
+      setAudioUnlocked(true);
+      toast({ title: "Audio activé", description: "La lecture vocale est prête sur mobile." });
+      // Also ensure the HTMLAudio element exists now
+      ensureAudioEl();
+    } catch (e: any) {
+      console.error("unlockAudio error", e);
+      toast({ title: "Activation audio échouée", description: e?.message || "Touchez à nouveau pour autoriser l'audio.", variant: "destructive" });
+    }
+  };
+
+  const base64ToUint8Array = (base64: string) => {
+    const bin = atob(base64);
+    const len = bin.length;
+    const bytes = new Uint8Array(len);
+    for (let i = 0; i < len; i++) bytes[i] = bin.charCodeAt(i);
+    return bytes;
+  };
   // Settings
   
   const [model, setModel] = useState<string>(() => localStorage.getItem("ai.openai.model") || "gpt-4o-mini");
@@ -179,6 +230,14 @@ export default function AIAssistantStub({ conversationId }: { conversationId?: s
     localStorage.setItem("ai.tts.voiceId", elevenVoiceId);
   }, [ttsProvider, elevenVoiceId]);
 
+  // On mobile, privilégier ElevenLabs et demander un déblocage audio
+  useEffect(() => {
+    if (isMobile && voiceEnabled && ttsProvider === "browser") {
+      setTtsProvider("elevenlabs");
+      toast({ title: "Voix optimisée mobile", description: "Passage automatique à ElevenLabs pour une meilleure compatibilité." });
+    }
+  }, [isMobile, voiceEnabled]);
+
   const frenchVoice = useMemo(() => {
     const synth = window.speechSynthesis;
     const pick = () => synth.getVoices().find((v) => v.lang?.toLowerCase().startsWith("fr"));
@@ -200,18 +259,42 @@ export default function AIAssistantStub({ conversationId }: { conversationId?: s
     try {
       if (ttsProvider === "elevenlabs") {
         setIsSpeaking(true);
+        if (isMobile && !audioUnlocked) {
+          toast({ title: "Activer l'audio", description: "Touchez “Activer l'audio” pour permettre la lecture vocale sur mobile." });
+          setIsSpeaking(false);
+          return;
+        }
         const { data, error } = await supabase.functions.invoke("tts-eleven", {
           body: { text, voiceId: elevenVoiceId },
         });
         if (error) throw new Error(error.message);
         const base64 = (data as any)?.audioContent as string;
         if (!base64) throw new Error("Audio non disponible");
-        const audio = new Audio(`data:audio/mpeg;base64,${base64}`);
-        audio.onended = () => setIsSpeaking(false);
-        audio.onerror = () => setIsSpeaking(false);
-        void audio.play().catch(() => setIsSpeaking(false));
+
+        // Use a singleton HTMLAudio element for reliable playback across browsers
+        const bytes = base64ToUint8Array(base64);
+        const blob = new Blob([bytes], { type: "audio/mpeg" });
+        const url = URL.createObjectURL(blob);
+        const el = ensureAudioEl();
+        el.onended = () => { setIsSpeaking(false); URL.revokeObjectURL(url); };
+        el.onerror = () => { setIsSpeaking(false); URL.revokeObjectURL(url); };
+        el.src = url;
+        el.currentTime = 0;
+        try {
+          await el.play();
+        } catch (playErr) {
+          console.warn("Playback failed, retry after resume", playErr);
+          try {
+            await audioCtxRef.current?.resume?.();
+            await el.play();
+          } catch (e) {
+            console.error("Audio play failed", e);
+            setIsSpeaking(false);
+          }
+        }
         return;
       }
+      // Web Speech API fallback
       const utter = new SpeechSynthesisUtterance(text);
       utter.lang = "fr-FR";
       const voices = window.speechSynthesis.getVoices();
@@ -404,6 +487,13 @@ export default function AIAssistantStub({ conversationId }: { conversationId?: s
             <Switch id="voice" checked={voiceEnabled} onCheckedChange={setVoiceEnabled} />
             <Label htmlFor="voice" className="text-sm">Réponse vocale</Label>
           </div>
+
+          {isMobile && voiceEnabled && !audioUnlocked && (
+            <div className="flex items-center gap-2">
+              <Button size="sm" onClick={unlockAudio}>Activer l'audio</Button>
+              <p className="text-xs text-muted-foreground">Requis une fois pour Safari/Chrome mobile</p>
+            </div>
+          )}
 
           <Sheet open={sheetOpen} onOpenChange={setSheetOpen}>
             <SheetTrigger asChild>
