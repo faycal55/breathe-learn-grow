@@ -24,6 +24,8 @@ import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Send, Settings, Mic, Square } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
+import psychFemale from "@/assets/psychologist-female.png";
+import psychMale from "@/assets/psychologist-male.png";
 
 // Chat message type
 interface ChatMessage {
@@ -65,7 +67,15 @@ const ELEVEN_VOICES = [
   { id: "9BWtsMINqrJLrRacOk9x", name: "Aria" },
   { id: "JBFqnCBsd6RMkjVDRZzb", name: "George" },
   { id: "cgSgspJ2msm6clMCkdW9", name: "Jessica" },
-];
+]; 
+
+function isFemaleVoice(voiceId: string) {
+  const femaleNames = new Set(["Charlotte","Sarah","Matilda","Aria","Jessica","Laura","Lily","Alice"]);
+  const v = ELEVEN_VOICES.find(v => v.id === voiceId);
+  if (v) return femaleNames.has(v.name);
+  // default female
+  return true;
+}
 
 async function generateOpenAIAnswer(apiKey: string, model: string, theme: string, history: ChatMessage[], userText: string) {
   const system = buildSystemPrompt(theme);
@@ -173,6 +183,7 @@ export default function AIAssistantStub() {
     if (!voiceEnabled) return;
     try {
       if (ttsProvider === "elevenlabs") {
+        setIsSpeaking(true);
         const { data, error } = await supabase.functions.invoke("tts-eleven", {
           body: { text, voiceId: elevenVoiceId },
         });
@@ -180,10 +191,9 @@ export default function AIAssistantStub() {
         const base64 = (data as any)?.audioContent as string;
         if (!base64) throw new Error("Audio non disponible");
         const audio = new Audio(`data:audio/mpeg;base64,${base64}`);
-        audio.onplay = () => setIsSpeaking(true);
         audio.onended = () => setIsSpeaking(false);
         audio.onerror = () => setIsSpeaking(false);
-        await audio.play();
+        void audio.play().catch(() => setIsSpeaking(false));
         return;
       }
       const utter = new SpeechSynthesisUtterance(text);
@@ -226,9 +236,11 @@ export default function AIAssistantStub() {
         try {
           const blob = new Blob(audioChunksRef.current, { type: "audio/webm" });
           const base64 = await blobToBase64(blob);
+          setInput("…transcription en cours…");
           const { data, error } = await supabase.functions.invoke("stt-transcribe", { body: { audio: base64 } });
           if (error) throw new Error(error.message);
           const text = (data as any)?.text as string;
+          setInput("");
           if (text && text.trim()) {
             await handleSend(text);
           } else {
@@ -303,9 +315,11 @@ export default function AIAssistantStub() {
   };
 
   return (
-    <Card className="shadow-sm">
+    <Card className="shadow-sm" aria-labelledby="soutien-psy-title">
       <CardHeader>
-        <CardTitle className="text-xl">Soutien psychologique (IA)</CardTitle>
+        <CardTitle id="soutien-psy-title" className="text-xl">Soutien psychologique (IA)</CardTitle>
+        <meta name="description" content="Soutien psychologique IA avec voix et illustration de psychologue. Conseils empathiques et techniques de respiration." />
+        <link rel="canonical" href="/#soutien-psychologique" />
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Controls */}
@@ -390,7 +404,7 @@ export default function AIAssistantStub() {
         </div>
 
         {/* Chat */}
-        <div className="rounded-lg border p-3 h-[320px] overflow-y-auto bg-card/50">
+        <div className="rounded-lg border p-3 h-[360px] overflow-y-auto bg-card/50" role="log" aria-live="polite">
           {messages.length === 0 && !isLoading && (
             <p className="text-sm text-muted-foreground">
               Partagez ce que vous traversez. Le psychologue IA répondra avec empathie et des techniques adaptées.
@@ -401,13 +415,17 @@ export default function AIAssistantStub() {
             {messages.map((m) => (
               <div key={m.id} className={`flex items-start gap-3 ${m.role === "user" ? "justify-end" : "justify-start"}`}>
                 {m.role === "assistant" && (
-                  <div className="shrink-0">
-                    <Avatar className="border">
-                      <AvatarFallback>Ψ</AvatarFallback>
-                    </Avatar>
-                  </div>
+                  <img
+                    src={isFemaleVoice(elevenVoiceId) ? psychFemale : psychMale}
+                    alt={isFemaleVoice(elevenVoiceId) ? "Illustration psychologue femme" : "Illustration psychologue homme"}
+                    className="w-12 h-12 rounded-full shadow-md ring-2 ring-primary/20 animate-fade-in hover-scale"
+                    loading="lazy"
+                  />
                 )}
-                <div className={`${m.role === "user" ? "bg-primary/10" : "bg-muted"} border rounded-lg px-3 py-2 max-w-[85%] animate-fade-in`}>
+                <div className={`${m.role === "user" ? "bg-primary/10" : "bg-muted"} relative border rounded-2xl px-3 py-2 max-w-[85%] animate-fade-in`}>
+                  {m.role === "assistant" && (
+                    <span className="absolute -left-1.5 bottom-3 w-3 h-3 bg-muted border-l border-b rotate-45 rounded-sm" aria-hidden="true" />
+                  )}
                   <p className="text-sm whitespace-pre-wrap">{m.content}</p>
                 </div>
                 {m.role === "user" && (
@@ -439,12 +457,14 @@ export default function AIAssistantStub() {
 
             {isSpeaking && (
               <div className="flex items-start gap-3">
-                <div className="shrink-0">
-                  <Avatar className="border ring-2 ring-primary/50">
-                    <AvatarFallback>Ψ</AvatarFallback>
-                  </Avatar>
-                </div>
-                <div className="bg-muted border rounded-lg px-3 py-2 max-w-[85%]">
+                <img
+                  src={isFemaleVoice(elevenVoiceId) ? psychFemale : psychMale}
+                  alt={isFemaleVoice(elevenVoiceId) ? "Illustration psychologue femme" : "Illustration psychologue homme"}
+                  className="w-12 h-12 rounded-full shadow-md ring-2 ring-primary/30 animate-fade-in"
+                  loading="lazy"
+                />
+                <div className="bg-muted border rounded-2xl px-3 py-2 max-w-[85%] relative">
+                  <span className="absolute -left-1.5 bottom-3 w-3 h-3 bg-muted border-l border-b rotate-45 rounded-sm" aria-hidden="true" />
                   <div className="flex items-end gap-1 h-4">
                     <span className="w-1.5 bg-foreground/70 rounded-sm animate-pulse" style={{ height: "8px", animationDelay: "0ms" }} />
                     <span className="w-1.5 bg-foreground/60 rounded-sm animate-pulse" style={{ height: "14px", animationDelay: "120ms" }} />
@@ -478,7 +498,7 @@ export default function AIAssistantStub() {
             <Button onClick={handleToggleRecording} variant="secondary" disabled={isLoading} className="h-10">
               {isRecording ? (<><Square className="h-4 w-4 mr-2" /> Stop</>) : (<><Mic className="h-4 w-4 mr-2" /> Parler</>)}
             </Button>
-            <Button onClick={() => handleSend()} disabled={isLoading || !input.trim()} className="h-10">
+            <Button onClick={() => handleSend()} disabled={isLoading || (!input.trim() && !isRecording)} className="h-10">
               <Send className="h-4 w-4 mr-2" /> Envoyer
             </Button>
             <Button variant="secondary" onClick={() => setInput("")} disabled={isLoading} className="h-10">Effacer</Button>

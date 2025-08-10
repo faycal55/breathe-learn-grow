@@ -30,7 +30,7 @@ serve(async (req) => {
     }
 
     const finalVoiceId = (voiceId && typeof voiceId === "string") ? voiceId : "XB0fDUnXU5powFXDhCwa"; // Charlotte
-    const finalModelId = (modelId && typeof modelId === "string") ? modelId : "eleven_multilingual_v2";
+    const finalModelId = (modelId && typeof modelId === "string") ? modelId : "eleven_turbo_v2_5";
 
     const resp = await fetch(`https://api.elevenlabs.io/v1/text-to-speech/${finalVoiceId}`, {
       method: "POST",
@@ -42,10 +42,11 @@ serve(async (req) => {
       body: JSON.stringify({
         text,
         model_id: finalModelId,
+        optimize_streaming_latency: 4,
         voice_settings: {
-          stability: 0.5,
-          similarity_boost: 0.75,
-          style: 0.35,
+          stability: 0.3,
+          similarity_boost: 0.6,
+          style: 0.2,
           use_speaker_boost: true,
         },
       }),
