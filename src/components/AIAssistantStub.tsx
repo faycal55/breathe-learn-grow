@@ -62,7 +62,9 @@ const ELEVEN_VOICES = [
   { id: "XrExE9yKIg1WjnnlVkGX", name: "Matilda" },
   { id: "TX3LPaxmHKxFdv7VOQHJ", name: "Liam" },
   { id: "N2lVS1w4EtoT3dr4eOWO", name: "Callum" },
-  { id: "XB0fDUnXU5powFXDhCwa", name: "Charlotte" },
+  { id: "9BWtsMINqrJLrRacOk9x", name: "Aria" },
+  { id: "JBFqnCBsd6RMkjVDRZzb", name: "George" },
+  { id: "cgSgspJ2msm6clMCkdW9", name: "Jessica" },
 ];
 
 async function generateOpenAIAnswer(apiKey: string, model: string, theme: string, history: ChatMessage[], userText: string) {
