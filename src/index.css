@@ -17,16 +17,16 @@ All colors MUST be HSL.
     --popover: 0 0% 100%;
     --popover-foreground: 222.2 84% 4.9%;
 
-    --primary: 222.2 47.4% 11.2%;
+    --primary: 190 90% 35%;
     --primary-foreground: 210 40% 98%;
 
-    --secondary: 210 40% 96.1%;
+    --secondary: 190 30% 96%;
     --secondary-foreground: 222.2 47.4% 11.2%;
 
-    --muted: 210 40% 96.1%;
+    --muted: 210 25% 96%;
     --muted-foreground: 215.4 16.3% 46.9%;
 
-    --accent: 210 40% 96.1%;
+    --accent: 270 85% 70%;
     --accent-foreground: 222.2 47.4% 11.2%;
 
     --destructive: 0 84.2% 60.2%;
@@ -65,7 +65,7 @@ All colors MUST be HSL.
     --popover: 222.2 84% 4.9%;
     --popover-foreground: 210 40% 98%;
 
-    --primary: 210 40% 98%;
+    --primary: 190 80% 60%;
     --primary-foreground: 222.2 47.4% 11.2%;
 
     --secondary: 217.2 32.6% 17.5%;
@@ -74,8 +74,8 @@ All colors MUST be HSL.
     --muted: 217.2 32.6% 17.5%;
     --muted-foreground: 215 20.2% 65.1%;
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --accent: 270 70% 70%;
+    --accent-foreground: 222.2 47.4% 11.2%;
 
     --destructive: 0 62.8% 30.6%;
     --destructive-foreground: 210 40% 98%;
@@ -102,4 +102,40 @@ All colors MUST be HSL.
   body {
     @apply bg-background text-foreground;
   }
+}
+
+/* Additional design tokens and utilities */
+:root {
+  --gradient-hero: linear-gradient(135deg, hsl(var(--primary) / 0.14), hsl(var(--accent) / 0.12));
+  --shadow-elevated: 0 20px 50px -12px hsl(var(--primary) / 0.25);
+  --shadow-glow: 0 0 0 3px hsl(var(--primary) / 0.15);
+  --breath-min-scale: 0.85;
+}
+.dark {
+  --gradient-hero: linear-gradient(135deg, hsl(var(--primary) / 0.18), hsl(var(--accent) / 0.16));
+}
+
+@keyframes fade-up { from { opacity: 0; transform: translateY(8px);} to { opacity: 1; transform: translateY(0);} }
+
+@layer components {
+  .hero-surface { background-image: var(--gradient-hero); }
+  .signature-gradient { position: relative; }
+  .signature-gradient::before {
+    content: "";
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(600px circle at var(--px, 50%) var(--py, 50%), hsl(var(--primary) / 0.18), transparent 65%);
+    pointer-events: none;
+  }
+  .breath-ball {
+    width: 14rem;
+    height: 14rem;
+    border-radius: 9999px;
+    background: radial-gradient(circle at 30% 30%, hsl(var(--accent) / 0.35), hsl(var(--primary) / 0.6));
+    box-shadow: var(--shadow-elevated);
+    transition: transform var(--phase-duration, 2s) ease-in-out, box-shadow 0.3s ease;
+    will-change: transform;
+  }
+  .breath-ball[data-scale='min'] { transform: scale(var(--breath-min-scale)); }
+  .breath-ball[data-scale='max'] { transform: scale(1); }
 }
