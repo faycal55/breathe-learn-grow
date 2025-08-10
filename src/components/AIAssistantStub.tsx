@@ -127,7 +127,7 @@ export default function AIAssistantStub() {
   const [sheetOpen, setSheetOpen] = useState(false);
 
   // Settings
-  const [apiKey, setApiKey] = useState<string>(() => localStorage.getItem("ai.openai.key") || "");
+  
   const [model, setModel] = useState<string>(() => localStorage.getItem("ai.openai.model") || "gpt-4o-mini");
   const [ttsProvider, setTtsProvider] = useState<string>(() => localStorage.getItem("ai.tts.provider") || "browser");
   const [elevenVoiceId, setElevenVoiceId] = useState<string>(() => localStorage.getItem("ai.tts.voiceId") || "XB0fDUnXU5powFXDhCwa");
@@ -208,7 +208,7 @@ export default function AIAssistantStub() {
       console.error(err);
       toast({
         title: "Erreur IA",
-        description: "Une erreur est survenue. Vérifiez votre clé/modèle et réessayez.",
+        description: "Le service est momentanément indisponible. Veuillez réessayer.",
       });
     } finally {
       setIsLoading(false);
@@ -216,9 +216,8 @@ export default function AIAssistantStub() {
   };
 
   const handleSaveSettings = () => {
-    localStorage.setItem("ai.openai.key", apiKey);
     localStorage.setItem("ai.openai.model", model);
-    toast({ title: "Paramètres enregistrés", description: "Votre configuration IA a été sauvegardée." });
+    toast({ title: "Paramètres enregistrés", description: "Configuration enregistrée." });
     setSheetOpen(false);
   };
 
@@ -257,19 +256,10 @@ export default function AIAssistantStub() {
               <SheetHeader>
                 <SheetTitle>Configuration IA</SheetTitle>
                 <SheetDescription>
-                  Entrez votre clé API (OpenAI) pour activer les réponses. Évitez de partager des secrets; idéalement utilisez Supabase Secrets.
+                  Les clients n'ont pas besoin de clé API. Les réponses sont générées via notre serveur sécurisé (Supabase Edge Functions).
                 </SheetDescription>
               </SheetHeader>
               <div className="mt-6 space-y-4">
-                <div className="space-y-2">
-                  <Label>Clé API OpenAI</Label>
-                  <Input
-                    type="password"
-                    value={apiKey}
-                    onChange={(e) => setApiKey(e.target.value)}
-                    placeholder="sk-..."
-                  />
-                </div>
                 <div className="space-y-2">
                   <Label>Modèle</Label>
                   <Input
@@ -311,7 +301,7 @@ export default function AIAssistantStub() {
 
                 <Button onClick={handleSaveSettings} className="w-full">Enregistrer</Button>
                 <p className="text-xs text-muted-foreground">
-                  Conseil: connectez ce projet à Supabase et stockez les clés côté serveur via Edge Functions.
+                  Les clés sont gérées côté serveur via Supabase Secrets; aucune saisie client n’est requise.
                 </p>
               </div>
             </SheetContent>
