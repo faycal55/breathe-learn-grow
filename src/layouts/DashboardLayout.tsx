@@ -50,7 +50,11 @@ export default function DashboardLayout() {
   const checkSubscription = async () => {
     try {
       setChecking(true);
-      const { data, error } = await supabase.functions.invoke("check-subscription");
+      const { data: sessionData } = await supabase.auth.getSession();
+      const accessToken = sessionData.session?.access_token;
+      const { data, error } = await supabase.functions.invoke("check-subscription", {
+        headers: accessToken ? { Authorization: `Bearer ${accessToken}` } : {},
+      });
       if (error) throw error;
       const isSub = Boolean((data as any)?.subscribed);
       setSubscribed(isSub);
