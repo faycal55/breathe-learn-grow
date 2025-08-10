@@ -21,7 +21,7 @@ const Index = () => {
     <div className="min-h-screen bg-background text-foreground">
       <header className="sticky top-0 z-10 backdrop-blur supports-[backdrop-filter]:bg-background/70 border-b">
         <nav className="container mx-auto flex items-center justify-between py-3">
-          <a href="#" className="font-semibold">Respire & Relie</a>
+          <a href="#" className="font-semibold">Respira</a>
           <div className="hidden md:flex items-center gap-6 text-sm text-muted-foreground">
             <a href="#breathing">Respiration</a>
             <a href="#assistant">Aide IA</a>
@@ -45,7 +45,7 @@ const Index = () => {
           <div className="container mx-auto grid gap-10 py-16 md:py-24 md:grid-cols-2 items-center">
             <div className="space-y-6 animate-[fade-up_0.6s_ease]">
               <h1 className="text-4xl md:text-5xl font-bold leading-tight">
-                Respire & Relie: respiration guidée, soutien psychologique, et lectures apaisantes
+                Respira: respiration guidée, soutien psychologique, et lectures apaisantes
               </h1>
               <p className="text-lg text-muted-foreground">
                 Une application pour apaiser le stress et cultiver la résilience: exercices de respiration
@@ -129,7 +129,7 @@ const Index = () => {
 
         <section id="marketing" className="container mx-auto py-16 md:py-24">
           <div className="max-w-4xl">
-            <h2 className="text-3xl font-semibold">Pourquoi Respire & Relie ?</h2>
+            <h2 className="text-3xl font-semibold">Pourquoi Respira ?</h2>
             <ul className="mt-4 grid md:grid-cols-2 gap-4 text-muted-foreground">
               <li className="rounded-lg border p-4">
                 Protocoles inspirés par la littérature scientifique (respiration lente, HRV, exhalation prolongée).
@@ -147,7 +147,7 @@ const Index = () => {
             <div className="mt-6">
               <h3 className="text-xl font-semibold">Pitch prêt à diffuser</h3>
               <p className="mt-2 text-muted-foreground">
-                Respire & Relie est l'application qui apaise et renforce: des exercices de respiration
+                Respira est l'application qui apaise et renforce: des exercices de respiration
                 validés, un soutien psychologique IA empathique, et une bibliothèque de classiques du
                 domaine public pour vous accompagner dans les moments clés. Essayez gratuitement pendant 2 jours —
                 respirez, recentrez-vous, et avancez avec sérénité.
@@ -189,7 +189,7 @@ const Index = () => {
 
       <footer className="border-t">
         <div className="container mx-auto py-8 text-sm text-muted-foreground">
-          © {new Date().getFullYear()} Respire & Relie — Ce produit ne remplace pas un avis médical.
+          © {new Date().getFullYear()} Respira — Ce produit ne remplace pas un avis médical.
         </div>
       </footer>
     </div>
