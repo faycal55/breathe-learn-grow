@@ -140,13 +140,19 @@ const Auth = () => {
   };
 
   return (
-    <main>
+    <div className="relative min-h-screen overflow-hidden">
       <Helmet>
         <title>Connexion | Respira</title>
         <meta name="description" content="Connectez-vous ou inscrivez-vous à Respira. Connexion par email ou vérification par SMS." />
         <link rel="canonical" href={`${window.location.origin}/auth`} />
       </Helmet>
-      <article className="container mx-auto py-16 md:py-24 max-w-md">
+      <div className="absolute inset-0 calm-animated-bg calm-overlay" aria-hidden="true" />
+      <main className="relative">
+        <section className="container mx-auto px-4 pt-16 md:pt-24 text-center animate-fade-in">
+          <h1 className="text-3xl md:text-4xl font-bold tracking-tight">Respira</h1>
+          <p className="mt-3 text-muted-foreground">Un espace apaisant, sécurisé et respectueux de votre confidentialité.</p>
+        </section>
+        <article className="container mx-auto py-8 md:py-12 max-w-md">
         <Card className="shadow-sm">
           <CardHeader>
             <CardTitle className="text-2xl">Accéder à votre espace</CardTitle>
@@ -252,6 +258,7 @@ const Auth = () => {
         </div>
       </article>
     </main>
+  </div>
   );
 };
 

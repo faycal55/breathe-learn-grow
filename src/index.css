@@ -116,6 +116,7 @@ All colors MUST be HSL.
 }
 
 @keyframes fade-up { from { opacity: 0; transform: translateY(8px);} to { opacity: 1; transform: translateY(0);} }
+@keyframes gradient-move { 0% { background-position: 0% 50%; } 50% { background-position: 100% 50%; } 100% { background-position: 0% 50%; } }
 
 @layer components {
   .hero-surface { background-image: var(--gradient-hero); }
@@ -138,4 +139,18 @@ All colors MUST be HSL.
   }
   .breath-ball[data-scale='min'] { transform: scale(var(--breath-min-scale)); }
   .breath-ball[data-scale='max'] { transform: scale(1); }
+
+  /* Calming animated background for Auth page */
+  .calm-animated-bg {
+    background: linear-gradient(120deg, hsl(var(--primary) / 0.35), hsl(var(--accent) / 0.25), hsl(var(--primary) / 0.35));
+    background-size: 200% 200%;
+    animation: gradient-move 12s ease-in-out infinite;
+  }
+  .calm-overlay {
+    /* Soft radial highlights for depth */
+    background-image:
+      radial-gradient(800px circle at 20% 10%, hsl(var(--primary) / 0.22), transparent 60%),
+      radial-gradient(600px circle at 80% 90%, hsl(var(--accent) / 0.18), transparent 60%);
+    mix-blend-mode: normal;
+  }
 }

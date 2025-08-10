@@ -29,8 +29,12 @@ const Index = () => {
   };
 
   const handleSignOut = async () => {
-    await supabase.auth.signOut();
-    toast({ title: "Déconnecté" });
+    try {
+      await supabase.auth.signOut();
+    } finally {
+      toast({ title: "Déconnecté" });
+      window.location.assign('/auth');
+    }
   };
   return (
     <div className="min-h-screen bg-background text-foreground">
