@@ -28,6 +28,7 @@ export default function BreathingCoach() {
   const [running, setRunning] = useState(false);
   const [phaseIndex, setPhaseIndex] = useState(0);
   const [remaining, setRemaining] = useState(0);
+  const [vibrate, setVibrate] = useState(true);
   const timerRef = useRef<number | null>(null);
 
   const phases: Phase[] = useMemo(() => {
@@ -61,6 +62,11 @@ export default function BreathingCoach() {
     if (!running) return;
     setRemaining(current.seconds);
 
+    // vibration courte à chaque changement de phase
+    if (vibrate && "vibrate" in navigator) {
+      try { navigator.vibrate(40); } catch {}
+    }
+
     timerRef.current = window.setInterval(() => {
       setRemaining((s) => {
         if (s <= 1) {
@@ -76,7 +82,6 @@ export default function BreathingCoach() {
       if (timerRef.current) window.clearInterval(timerRef.current);
       timerRef.current = null;
     };
-    // We intentionally omit dependencies that would restart interval mid-phase
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [running, phaseIndex, phases]);
 
@@ -87,7 +92,6 @@ export default function BreathingCoach() {
     setRemaining(0);
   };
 
-  // Pointer-reactive gradient in hero is handled in the page; here we focus on the module UI
   return (
     <Card className="shadow-sm">
       <CardHeader>
@@ -102,9 +106,9 @@ export default function BreathingCoach() {
                 <SelectValue placeholder="Choisissez une technique" />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="coherent">{TECHNIQUE_LABELS["coherent"]}</SelectItem>
-                <SelectItem value="extended">{TECHNIQUE_LABELS["extended"]}</SelectItem>
-                <SelectItem value="box">{TECHNIQUE_LABELS["box"]}</SelectItem>
+                <SelectItem value="coherent">Respiration cohérente (~6 cycles/min)</SelectItem>
+                <SelectItem value="extended">Inspiration 4s, expir 6s (exhalation prolongée)</SelectItem>
+                <SelectItem value="box">Box breathing (4-4-4-4)</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -115,12 +119,17 @@ export default function BreathingCoach() {
               <p className="text-sm text-muted-foreground">Temps restant</p>
             </div>
             <div className="flex items-end justify-between">
-              <div className="text-2xl font-semibold">{current?.name}</div>
+              <div className="text-2xl font-semibold" aria-live="polite">{current?.name}</div>
               <div className="text-3xl tabular-nums font-bold">{remaining}s</div>
             </div>
             <p className="mt-2 text-xs text-muted-foreground">
-              Rythme cible ~5–6 cycles/min. Expirations plus longues → activation parasympathique.
+              Inspirez lorsque la sphère grandit, expirez lorsqu’elle diminue. Expirations plus longues → activation parasympathique.
             </p>
+
+            <div className="mt-3 flex items-center gap-2">
+              <input id="vibrate" type="checkbox" checked={vibrate} onChange={(e) => setVibrate(e.target.checked)} />
+              <label htmlFor="vibrate" className="text-sm">Vibrations (mobile)</label>
+            </div>
           </div>
 
           <div className="flex gap-2">
@@ -132,11 +141,7 @@ export default function BreathingCoach() {
         <div className="order-1 md:order-2 mx-auto">
           <div
             className="breath-ball"
-            style={{
-              // Inform the CSS transition of the current phase length
-              // @ts-ignore - custom CSS var
-              "--phase-duration": `${Math.max(current?.seconds || 2, 1)}s`,
-            } as React.CSSProperties}
+            style={{ "--phase-duration": `${Math.max(current?.seconds || 2, 1)}s` } as React.CSSProperties}
             data-scale={current?.scale === "max" ? "max" : "min"}
             aria-label="Guide visuel de respiration"
           />

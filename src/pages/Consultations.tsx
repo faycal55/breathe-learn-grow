@@ -58,7 +58,25 @@ export default function Consultations() {
       <h1 className="text-2xl font-semibold">Mes consultations</h1>
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">Gérez votre historique et démarrez une nouvelle consultation.</p>
-        <Button onClick={() => {/* create new conversation inline like in dashboard */ navigate(0); }} title="Créer depuis l’assistant">Nouveau via assistant</Button>
+        <Button onClick={async () => {
+          if (!userId) return;
+          const title = `Consultation du ${new Date().toLocaleDateString()}`;
+          const { data, error } = await supabase
+            .from("conversations")
+            .insert({ user_id: userId, title })
+            .select("id").single();
+          if (error) {
+            toast({ title: "Création impossible", description: error.message, variant: "destructive" });
+          } else {
+            setSelectedId(data.id);
+            setTimeout(() => { /* ensure assistant mounts */ }, 0);
+            // refresh list
+            const { data: d2 } = await supabase
+              .from("conversations").select("id,title,created_at").eq("user_id", userId).order("updated_at", { ascending: false });
+            setConversations(d2 || []);
+            toast({ title: "Nouvelle consultation" });
+          }
+        }} title="Créer une nouvelle consultation">Nouvelle consultation</Button>
       </div>
       <div className="grid md:grid-cols-3 gap-4">
         <Card className="md:col-span-1">
