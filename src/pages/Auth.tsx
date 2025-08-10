@@ -25,11 +25,11 @@ const Auth = () => {
     const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
       if (session) {
         toast({ title: "Connecté", description: "Redirection en cours..." });
-        navigate("/", { replace: true });
+        navigate("/dashboard", { replace: true });
       }
     });
     supabase.auth.getSession().then(({ data: { session } }) => {
-      if (session) navigate("/", { replace: true });
+      if (session) navigate("/dashboard", { replace: true });
     });
     return () => subscription.unsubscribe();
   }, [navigate]);

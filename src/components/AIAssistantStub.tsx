@@ -127,7 +127,7 @@ async function generateAnswerViaEdge(model: string, theme: string, history: Chat
   return answer;
 }
 
-export default function AIAssistantStub() {
+export default function AIAssistantStub({ conversationId }: { conversationId?: string }) {
   const [theme, setTheme] = useState<string>(THEMES[0]);
   const [input, setInput] = useState("");
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -153,6 +153,22 @@ export default function AIAssistantStub() {
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages, isLoading]);
+
+  // Load persisted messages when a conversation is selected
+  useEffect(() => {
+    const load = async () => {
+      if (!conversationId) return;
+      const { data, error } = await supabase
+        .from("messages")
+        .select("id, role, content, created_at")
+        .eq("conversation_id", conversationId)
+        .order("created_at", { ascending: true });
+      if (!error && data) {
+        setMessages(data.map((m: any) => ({ id: m.id, role: m.role, content: m.content })));
+      }
+    };
+    load();
+  }, [conversationId]);
 
   useEffect(() => {
     localStorage.setItem("ai.voiceEnabled", String(voiceEnabled));
@@ -288,6 +304,13 @@ export default function AIAssistantStub() {
       const answer = await generateAnswerViaEdge(model, theme, messages, text);
       const botMsg: ChatMessage = { id: crypto.randomUUID(), role: "assistant", content: answer };
       setMessages((prev) => [...prev, botMsg]);
+      // Persist both messages if conversation is selected
+      if (conversationId) {
+        await supabase.from("messages").insert([
+          { conversation_id: conversationId, role: "user", content: text },
+          { conversation_id: conversationId, role: "assistant", content: answer },
+        ]);
+      }
       speak(answer);
     } catch (err: any) {
       console.error(err);
@@ -315,11 +338,11 @@ export default function AIAssistantStub() {
   };
 
   return (
-    <Card className="shadow-sm" aria-labelledby="soutien-psy-title">
+    <Card className="shadow-sm" aria-labelledby="psy-ia-title">
       <CardHeader>
-        <CardTitle id="soutien-psy-title" className="text-xl">Soutien psychologique (IA)</CardTitle>
-        <meta name="description" content="Soutien psychologique IA avec voix et illustration de psychologue. Conseils empathiques et techniques de respiration." />
-        <link rel="canonical" href="/#soutien-psychologique" />
+        <CardTitle id="psy-ia-title" className="text-xl">Psychologue IA professionnel</CardTitle>
+        <meta name="description" content="Psychologue IA professionnel: réponses empathiques avec voix et illustration. Conseils et techniques de respiration." />
+        <link rel="canonical" href="/#psychologue-ia" />
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Controls */}
