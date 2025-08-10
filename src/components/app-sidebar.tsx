@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import { BookOpen, Headphones, Heart, Inbox, Bot } from "lucide-react";
+import { BookOpen, Headphones, Heart, Inbox, Bot, CalendarClock } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -17,6 +17,7 @@ const items = [
   { title: "Respiration", url: "/dashboard/breathing", icon: Heart },
   { title: "Playlist apaisante", url: "/dashboard/playlist", icon: Headphones },
   { title: "Bibliothèque", url: "/dashboard/library", icon: BookOpen },
+  { title: "Planning personnalisé", url: "/dashboard/planning", icon: CalendarClock },
   { title: "Abonnement", url: "/dashboard/subscription", icon: Inbox },
 ];
 

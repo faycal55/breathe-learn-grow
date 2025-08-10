@@ -8,3 +8,7 @@ verify_jwt = false
 
 [functions.stt-transcribe]
 verify_jwt = false
+
+[functions.ai-scheduler]
+verify_jwt = true
+
