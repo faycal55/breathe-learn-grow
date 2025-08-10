@@ -77,9 +77,7 @@ export default function DashboardLayout() {
             {!checking && subscribed === false && (
               <div className="ml-4 text-sm text-muted-foreground">Abonnement requis</div>
             )}
-            <div className="ml-auto">
-              <Button variant="secondary" onClick={() => navigate("/home")}>Site</Button>
-            </div>
+            {/* Removed marketing site button as requested */}
           </header>
           <main className="container mx-auto px-4 py-6">
             <Outlet />

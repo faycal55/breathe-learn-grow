@@ -1,5 +1,5 @@
 import { NavLink } from "react-router-dom";
-import { BookOpen, Headphones, Heart, Inbox, Bot, CalendarClock, ListChecks } from "lucide-react";
+import { BookOpen, Headphones, Heart, Inbox, Bot, CalendarClock, ListChecks, FileText, Scale } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -41,6 +41,29 @@ export function AppSidebar() {
                   </SidebarMenuButton>
                 </SidebarMenuItem>
               ))}
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+        <SidebarGroup>
+          <SidebarGroupLabel>Infos légales</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <NavLink to="/legal" end>
+                    <FileText className="mr-2 h-4 w-4" />
+                    <span>Mentions légales</span>
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <NavLink to="/conditions-paiement" end>
+                    <Scale className="mr-2 h-4 w-4" />
+                    <span>Conditions de paiement</span>
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
             </SidebarMenu>
           </SidebarGroupContent>
         </SidebarGroup>
