@@ -3,26 +3,47 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 
 interface Track { title: string; src: string; source: string }
 
-// Streaming externe (FreePD - CC0) et fichiers locaux (public/audio)
+// Fichiers locaux (public/audio) et titres classés par thème
 const THEMES: Record<string, Track[]> = {
   "Sons pour dormir (apaisants)": [
-    { title: "Deep Tones", src: "/audio/deep-tones.mp3", source: "Local (freepd.com, CC0)" },
-    { title: "Aquarium", src: "/audio/aquarium.mp3", source: "Local (freepd.com, CC0)" },
+    { title: "Deep Tones", src: "/audio/deep-tones.mp3", source: "Local (freepd.com)" },
+    { title: "Aquarium", src: "/audio/aquarium.mp3", source: "Local (freepd.com)" },
   ],
   "Sons motivants": [
-    { title: "Connecting Rainbows", src: "/audio/connecting-rainbows.mp3", source: "Local (freepd.com, CC0)" },
-    { title: "Consecrated Ground", src: "/audio/consecrated-ground.mp3", source: "Local (freepd.com, CC0)" },
+    { title: "Connecting Rainbows", src: "/audio/connecting-rainbows.mp3", source: "Local (freepd.com)" },
+    { title: "Consecrated Ground", src: "/audio/consecrated-ground.mp3", source: "Local (freepd.com)" },
+    { title: "Motivational Anthem", src: "/audio/motivational-anthem.mp3", source: "Internet Archive" },
   ],
-  // Thèmes à compléter (streams CC0 à venir)
-  "Pluie (rain)": [],
-  "Mer (vagues)": [],
-  "Vent": [],
-  "Forêt": [],
-  "Cheminée": [],
-  "Ville (ambiance urbaine)": [],
-  "Avion (cabine)": [],
-  "Yoga / Relaxation": [],
-  "Rêverie / Inspirant": [],
+  "Pluie (rain)": [
+    { title: "Pluie légère", src: "/audio/rain-light.ogg", source: "Wikimedia Commons" },
+  ],
+  "Mer (vagues)": [
+    { title: "Vagues océaniques", src: "/audio/ocean-waves.ogg", source: "Wikimedia Commons" },
+  ],
+  "Vent": [
+    { title: "Vent dans la forêt", src: "/audio/wind-forest.ogg", source: "Wikimedia Commons" },
+  ],
+  "Forêt": [
+    { title: "Oiseaux en forêt", src: "/audio/forest-birds.ogg", source: "Wikimedia Commons" },
+  ],
+  "Cheminée": [
+    { title: "Feu de cheminée", src: "/audio/fireplace.ogg", source: "Wikimedia Commons" },
+  ],
+  "Ville (ambiance urbaine)": [
+    { title: "Ambiance urbaine", src: "/audio/city-ambience.ogg", source: "Wikimedia Commons" },
+    { title: "Centre commercial", src: "/audio/city-mall.ogg", source: "Wikimedia Commons" },
+  ],
+  "Avion (cabine)": [
+    { title: "Annonces d'aéroport", src: "/audio/airport-bulletin.ogg", source: "Wikimedia Commons" },
+  ],
+  "Yoga / Relaxation": [
+    { title: "Fréquence 528 Hz", src: "/audio/yoga-528hz.mp3", source: "Internet Archive" },
+    { title: "Fréquence 417 Hz", src: "/audio/yoga-417hz.mp3", source: "Internet Archive" },
+  ],
+  "Rêverie / Inspirant": [
+    { title: "Serene View", src: "/audio/serene-view.mp3", source: "Internet Archive" },
+    { title: "Joy of Travel", src: "/audio/joy-of-travel.mp3", source: "Internet Archive" },
+  ],
 };
 
 export default function Playlist() {
