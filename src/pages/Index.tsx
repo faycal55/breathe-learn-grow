@@ -1,11 +1,22 @@
-import { useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import BreathingCoach from "@/components/BreathingCoach";
 import AIAssistantStub from "@/components/AIAssistantStub";
 import ThematicLibrary from "@/components/ThematicLibrary";
 import { Button } from "@/components/ui/button";
+import { supabase } from "@/integrations/supabase/client";
+import { toast } from "@/hooks/use-toast";
 
 const Index = () => {
   const heroRef = useRef<HTMLDivElement | null>(null);
+  const [isAuthed, setIsAuthed] = useState(false);
+
+  useEffect(() => {
+    const { data: { subscription } } = supabase.auth.onAuthStateChange((_event, session) => {
+      setIsAuthed(!!session);
+    });
+    supabase.auth.getSession().then(({ data: { session } }) => setIsAuthed(!!session));
+    return () => subscription.unsubscribe();
+  }, []);
 
   const handlePointerMove = (e: React.MouseEvent<HTMLDivElement>) => {
     const el = heroRef.current;
@@ -17,6 +28,10 @@ const Index = () => {
     el.style.setProperty("--py", `${py}%`);
   };
 
+  const handleSignOut = async () => {
+    await supabase.auth.signOut();
+    toast({ title: "Déconnecté" });
+  };
   return (
     <div className="min-h-screen bg-background text-foreground">
       <header className="sticky top-0 z-10 backdrop-blur supports-[backdrop-filter]:bg-background/70 border-b">
@@ -30,8 +45,12 @@ const Index = () => {
             <a href="#references">Références</a>
           </div>
           <div className="flex gap-2">
+            {!isAuthed ? (
+              <a href="/auth"><Button variant="secondary">Se connecter</Button></a>
+            ) : (
+              <Button variant="secondary" onClick={handleSignOut}>Se déconnecter</Button>
+            )}
             <a href="#breathing"><Button>Commencer</Button></a>
-            <a href="#pricing"><Button variant="secondary">Essai 2 jours</Button></a>
           </div>
         </nav>
       </header>
