@@ -56,6 +56,15 @@ function buildSystemPrompt(theme: string) {
 - Réponds en français, 5 à 8 phrases maximum, structurées et chaleureuses.`;
 }
 
+const ELEVEN_VOICES = [
+  { id: "XB0fDUnXU5powFXDhCwa", name: "Charlotte" },
+  { id: "EXAVITQu4vr4xnSDxMaL", name: "Sarah" },
+  { id: "XrExE9yKIg1WjnnlVkGX", name: "Matilda" },
+  { id: "TX3LPaxmHKxFdv7VOQHJ", name: "Liam" },
+  { id: "N2lVS1w4EtoT3dr4eOWO", name: "Callum" },
+  { id: "XB0fDUnXU5powFXDhCwa", name: "Charlotte" },
+];
+
 async function generateOpenAIAnswer(apiKey: string, model: string, theme: string, history: ChatMessage[], userText: string) {
   const system = buildSystemPrompt(theme);
   const messages = [
@@ -118,6 +127,8 @@ export default function AIAssistantStub() {
   // Settings
   const [apiKey, setApiKey] = useState<string>(() => localStorage.getItem("ai.openai.key") || "");
   const [model, setModel] = useState<string>(() => localStorage.getItem("ai.openai.model") || "gpt-4o-mini");
+  const [ttsProvider, setTtsProvider] = useState<string>(() => localStorage.getItem("ai.tts.provider") || "browser");
+  const [elevenVoiceId, setElevenVoiceId] = useState<string>(() => localStorage.getItem("ai.tts.voiceId") || "XB0fDUnXU5powFXDhCwa");
 
   const chatEndRef = useRef<HTMLDivElement | null>(null);
 
@@ -128,6 +139,11 @@ export default function AIAssistantStub() {
   useEffect(() => {
     localStorage.setItem("ai.voiceEnabled", String(voiceEnabled));
   }, [voiceEnabled]);
+
+  useEffect(() => {
+    localStorage.setItem("ai.tts.provider", ttsProvider);
+    localStorage.setItem("ai.tts.voiceId", elevenVoiceId);
+  }, [ttsProvider, elevenVoiceId]);
 
   const frenchVoice = useMemo(() => {
     const synth = window.speechSynthesis;
@@ -145,9 +161,20 @@ export default function AIAssistantStub() {
     return () => window.speechSynthesis.removeEventListener("voiceschanged", handler);
   }, []);
 
-  const speak = (text: string) => {
+  const speak = async (text: string) => {
     if (!voiceEnabled) return;
     try {
+      if (ttsProvider === "elevenlabs") {
+        const { data, error } = await supabase.functions.invoke("tts-eleven", {
+          body: { text, voiceId: elevenVoiceId },
+        });
+        if (error) throw new Error(error.message);
+        const base64 = (data as any)?.audioContent as string;
+        if (!base64) throw new Error("Audio non disponible");
+        const audio = new Audio(`data:audio/mpeg;base64,${base64}`);
+        await audio.play();
+        return;
+      }
       const utter = new SpeechSynthesisUtterance(text);
       utter.lang = "fr-FR";
       const voices = window.speechSynthesis.getVoices();
@@ -249,9 +276,40 @@ export default function AIAssistantStub() {
                     placeholder="gpt-4o-mini"
                   />
                 </div>
+
+                <div className="space-y-2">
+                  <Label>Fournisseur TTS</Label>
+                  <Select value={ttsProvider} onValueChange={setTtsProvider}>
+                    <SelectTrigger className="w-full mt-1">
+                      <SelectValue placeholder="Choisir un fournisseur" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="browser">Navigateur (Web Speech)</SelectItem>
+                      <SelectItem value="elevenlabs">ElevenLabs (qualité studio)</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                {ttsProvider === "elevenlabs" && (
+                  <div className="space-y-2">
+                    <Label>Voix ElevenLabs</Label>
+                    <Select value={elevenVoiceId} onValueChange={setElevenVoiceId}>
+                      <SelectTrigger className="w-full mt-1">
+                        <SelectValue placeholder="Choisir une voix" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {ELEVEN_VOICES.map(v => (
+                          <SelectItem key={v.id} value={v.id}>{v.name}</SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                    <p className="text-xs text-muted-foreground">Ajoutez votre clé ElevenLabs via Supabase Secrets pour activer cette option.</p>
+                  </div>
+                )}
+
                 <Button onClick={handleSaveSettings} className="w-full">Enregistrer</Button>
                 <p className="text-xs text-muted-foreground">
-                  Conseil: connectez ce projet à Supabase et stockez la clé côté serveur via Edge Functions.
+                  Conseil: connectez ce projet à Supabase et stockez les clés côté serveur via Edge Functions.
                 </p>
               </div>
             </SheetContent>

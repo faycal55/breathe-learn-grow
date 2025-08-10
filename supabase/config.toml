@@ -2,3 +2,6 @@ project_id = "txdnzzijeqiyvkbozwbx"
 
 [functions.ai-chat]
 verify_jwt = false
+
+[functions.tts-eleven]
+verify_jwt = false
