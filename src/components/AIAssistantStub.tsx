@@ -22,7 +22,7 @@ import {
 } from "@/components/ui/sheet";
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
-import { Send, Settings } from "lucide-react";
+import { Send, Settings, Mic, Square } from "lucide-react";
 import { supabase } from "@/integrations/supabase/client";
 
 // Chat message type
@@ -127,6 +127,10 @@ export default function AIAssistantStub() {
     return v ? v === "true" : false;
   });
   const [sheetOpen, setSheetOpen] = useState(false);
+  const [isRecording, setIsRecording] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const mediaRecorderRef = useRef<MediaRecorder | null>(null);
+  const audioChunksRef = useRef<Blob[]>([]);
 
   // Settings
   
@@ -176,6 +180,9 @@ export default function AIAssistantStub() {
         const base64 = (data as any)?.audioContent as string;
         if (!base64) throw new Error("Audio non disponible");
         const audio = new Audio(`data:audio/mpeg;base64,${base64}`);
+        audio.onplay = () => setIsSpeaking(true);
+        audio.onended = () => setIsSpeaking(false);
+        audio.onerror = () => setIsSpeaking(false);
         await audio.play();
         return;
       }
@@ -184,15 +191,79 @@ export default function AIAssistantStub() {
       const voices = window.speechSynthesis.getVoices();
       const v = voices.find((vv) => vv.lang?.toLowerCase().startsWith("fr"));
       if (v) utter.voice = v;
+      utter.onstart = () => setIsSpeaking(true);
+      utter.onend = () => setIsSpeaking(false);
+      utter.onerror = () => setIsSpeaking(false);
       window.speechSynthesis.cancel();
       window.speechSynthesis.speak(utter);
     } catch (e) {
       console.error(e);
+      setIsSpeaking(false);
     }
   };
 
-  const handleSend = async () => {
-    const text = input.trim();
+  // Voice recording helpers
+  const blobToBase64 = (blob: Blob): Promise<string> => new Promise((resolve, reject) => {
+    const reader = new FileReader();
+    reader.onloadend = () => {
+      const dataUrl = String(reader.result || "");
+      const base64 = dataUrl.split(",")[1] || "";
+      resolve(base64);
+    };
+    reader.onerror = reject;
+    reader.readAsDataURL(blob);
+  });
+
+  const startRecording = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+      const mr = new MediaRecorder(stream, { mimeType: "audio/webm" });
+      audioChunksRef.current = [];
+      mr.ondataavailable = (e) => {
+        if (e.data && e.data.size > 0) audioChunksRef.current.push(e.data);
+      };
+      mr.onstop = async () => {
+        try {
+          const blob = new Blob(audioChunksRef.current, { type: "audio/webm" });
+          const base64 = await blobToBase64(blob);
+          const { data, error } = await supabase.functions.invoke("stt-transcribe", { body: { audio: base64 } });
+          if (error) throw new Error(error.message);
+          const text = (data as any)?.text as string;
+          if (text && text.trim()) {
+            await handleSend(text);
+          } else {
+            toast({ title: "Transcription vide", description: "Nous n'avons pas pu reconnaître votre voix." });
+          }
+        } catch (err: any) {
+          console.error(err);
+          toast({ title: "Erreur micro", description: err?.message || "Échec de la transcription" });
+        } finally {
+          setIsRecording(false);
+          stream.getTracks().forEach(t => t.stop());
+        }
+      };
+      mediaRecorderRef.current = mr;
+      mr.start();
+      setIsRecording(true);
+    } catch (e: any) {
+      console.error(e);
+      toast({ title: "Micro non disponible", description: e?.message || "Autorisez l'accès au micro" });
+    }
+  };
+
+  const stopRecording = async () => {
+    try {
+      mediaRecorderRef.current?.state !== "inactive" && mediaRecorderRef.current?.stop();
+    } catch {}
+  };
+
+  const handleToggleRecording = async () => {
+    if (isRecording) return stopRecording();
+    return startRecording();
+  };
+
+  const handleSend = async (overrideText?: string) => {
+    const text = (overrideText ?? input).trim();
     if (!text) return;
 
     const newMsg: ChatMessage = { id: crypto.randomUUID(), role: "user", content: text };
@@ -366,6 +437,25 @@ export default function AIAssistantStub() {
               </div>
             )}
 
+            {isSpeaking && (
+              <div className="flex items-start gap-3">
+                <div className="shrink-0">
+                  <Avatar className="border ring-2 ring-primary/50">
+                    <AvatarFallback>Ψ</AvatarFallback>
+                  </Avatar>
+                </div>
+                <div className="bg-muted border rounded-lg px-3 py-2 max-w-[85%]">
+                  <div className="flex items-end gap-1 h-4">
+                    <span className="w-1.5 bg-foreground/70 rounded-sm animate-pulse" style={{ height: "8px", animationDelay: "0ms" }} />
+                    <span className="w-1.5 bg-foreground/60 rounded-sm animate-pulse" style={{ height: "14px", animationDelay: "120ms" }} />
+                    <span className="w-1.5 bg-foreground/50 rounded-sm animate-pulse" style={{ height: "10px", animationDelay: "240ms" }} />
+                    <span className="w-1.5 bg-foreground/60 rounded-sm animate-pulse" style={{ height: "16px", animationDelay: "360ms" }} />
+                    <span className="w-1.5 bg-foreground/70 rounded-sm animate-pulse" style={{ height: "12px", animationDelay: "480ms" }} />
+                  </div>
+                </div>
+              </div>
+            )}
+
             <div ref={chatEndRef} />
           </div>
         </div>
@@ -385,7 +475,10 @@ export default function AIAssistantStub() {
             }}
           />
           <div className="flex flex-col gap-2">
-            <Button onClick={handleSend} disabled={isLoading || !input.trim()} className="h-10">
+            <Button onClick={handleToggleRecording} variant="secondary" disabled={isLoading} className="h-10">
+              {isRecording ? (<><Square className="h-4 w-4 mr-2" /> Stop</>) : (<><Mic className="h-4 w-4 mr-2" /> Parler</>)}
+            </Button>
+            <Button onClick={() => handleSend()} disabled={isLoading || !input.trim()} className="h-10">
               <Send className="h-4 w-4 mr-2" /> Envoyer
             </Button>
             <Button variant="secondary" onClick={() => setInput("")} disabled={isLoading} className="h-10">Effacer</Button>

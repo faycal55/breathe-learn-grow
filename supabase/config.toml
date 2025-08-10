@@ -5,3 +5,6 @@ verify_jwt = false
 
 [functions.tts-eleven]
 verify_jwt = false
+
+[functions.stt-transcribe]
+verify_jwt = false
