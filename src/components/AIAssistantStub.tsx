@@ -23,6 +23,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Send, Settings } from "lucide-react";
+import { supabase } from "@/integrations/supabase/client";
 
 // Chat message type
 interface ChatMessage {
@@ -84,6 +85,23 @@ async function generateOpenAIAnswer(apiKey: string, model: string, theme: string
   const json = await res.json();
   const content = json.choices?.[0]?.message?.content?.trim?.() ?? "";
   return content;
+}
+
+async function generateAnswerViaEdge(model: string, theme: string, history: ChatMessage[], userText: string) {
+  const { data, error } = await supabase.functions.invoke("ai-chat", {
+    body: {
+      model,
+      theme,
+      history,
+      userText,
+    },
+  });
+  if (error) {
+    throw new Error(error.message || "Edge function error");
+  }
+  const answer = (data as any)?.answer as string;
+  if (!answer) throw new Error("No answer returned");
+  return answer;
 }
 
 export default function AIAssistantStub() {
@@ -150,17 +168,10 @@ export default function AIAssistantStub() {
     setMessages((prev) => [...prev, newMsg]);
     setInput("");
 
-    if (!apiKey) {
-      toast({
-        title: "Clé API requise",
-        description: "Ouvrez les paramètres et ajoutez votre clé API OpenAI pour activer l'IA.",
-      });
-      return;
-    }
 
     setIsLoading(true);
     try {
-      const answer = await generateOpenAIAnswer(apiKey, model, theme, messages, text);
+      const answer = await generateAnswerViaEdge(model, theme, messages, text);
       const botMsg: ChatMessage = { id: crypto.randomUUID(), role: "assistant", content: answer };
       setMessages((prev) => [...prev, botMsg]);
       speak(answer);
