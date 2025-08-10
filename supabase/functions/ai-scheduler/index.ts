@@ -91,11 +91,13 @@ serve(async (req) => {
       });
     }
 
+    const cappedDays = Math.min(Number(days ?? 7), 7);
+
     const userInstruction = `
 Génère un planning horaire personnalisé en français.
 Paramètres utilisateur:
 - Date de début: ${startDate}
-- Nombre de jours: ${days}
+- Nombre de jours: ${cappedDays}
 - Fuseau horaire: ${timezone}
 - Disponibilités: ${JSON.stringify(availability)}
 - Objectifs/préférences: ${goals || "(non précisé)"}
@@ -115,7 +117,8 @@ N’utilise QUE les heures libres (hors travail/sommeil/engagements). Organise p
           { role: "user", content: userInstruction },
         ],
         temperature: 0.6,
-        max_tokens: 1400,
+        max_tokens: 2200,
+        response_format: { type: "json_object" },
       }),
     });
 
