@@ -1,5 +1,5 @@
-import { NavLink } from "react-router-dom";
-import { BookOpen, Headphones, Heart, Inbox, Bot, CalendarClock, ListChecks, FileText, Scale } from "lucide-react";
+import { NavLink, useNavigate } from "react-router-dom";
+import { BookOpen, Headphones, Heart, Inbox, Bot, CalendarClock, ListChecks, FileText, Scale, Mail, FileSignature, LogOut } from "lucide-react";
 import {
   Sidebar,
   SidebarContent,
@@ -11,7 +11,8 @@ import {
   SidebarMenuItem,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
-
+import { supabase } from "@/integrations/supabase/client";
+import { useToast } from "@/hooks/use-toast";
 const items = [
   { title: "Mes consultations", url: "/dashboard/consultations", icon: Bot },
   { title: "Respiration", url: "/dashboard/breathing", icon: Heart },
@@ -23,6 +24,8 @@ const items = [
 ];
 
 export function AppSidebar() {
+  const navigate = useNavigate();
+  const { toast } = useToast();
   return (
     <Sidebar collapsible="icon">
       
@@ -45,6 +48,21 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
         <SidebarGroup>
+          <SidebarGroupLabel>Support</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
+                  <NavLink to="/contact" end>
+                    <Mail className="mr-2 h-4 w-4" />
+                    <span>Contact</span>
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+        <SidebarGroup>
           <SidebarGroupLabel>Infos légales</SidebarGroupLabel>
           <SidebarGroupContent>
             <SidebarMenu>
@@ -58,10 +76,37 @@ export function AppSidebar() {
               </SidebarMenuItem>
               <SidebarMenuItem>
                 <SidebarMenuButton asChild>
+                  <NavLink to="/conditions-generales" end>
+                    <FileSignature className="mr-2 h-4 w-4" />
+                    <span>Conditions générales</span>
+                  </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+              <SidebarMenuItem>
+                <SidebarMenuButton asChild>
                   <NavLink to="/conditions-paiement" end>
                     <Scale className="mr-2 h-4 w-4" />
                     <span>Conditions de paiement</span>
                   </NavLink>
+                </SidebarMenuButton>
+              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroupContent>
+        </SidebarGroup>
+        <SidebarGroup>
+          <SidebarGroupLabel>Compte</SidebarGroupLabel>
+          <SidebarGroupContent>
+            <SidebarMenu>
+              <SidebarMenuItem>
+                <SidebarMenuButton
+                  onClick={async () => {
+                    await supabase.auth.signOut();
+                    toast({ title: "Déconnecté" });
+                    navigate("/auth", { replace: true });
+                  }}
+                >
+                  <LogOut className="mr-2 h-4 w-4" />
+                  <span>Déconnexion</span>
                 </SidebarMenuButton>
               </SidebarMenuItem>
             </SidebarMenu>

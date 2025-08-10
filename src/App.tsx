@@ -16,7 +16,8 @@ import Library from "./pages/Library";
 import Subscription from "./pages/Subscription";
 import Planning from "./pages/Planning";
 import Guides from "./pages/Guides";
-
+import Contact from "./pages/Contact";
+import TermsGeneral from "./pages/TermsGeneral";
 const queryClient = new QueryClient();
 
 const App = () => (
@@ -42,6 +43,8 @@ const App = () => (
             <Route path="/auth" element={<Auth />} />
             <Route path="/legal" element={<Legal />} />
             <Route path="/conditions-paiement" element={<PaymentTerms />} />
+            <Route path="/conditions-generales" element={<TermsGeneral />} />
+            <Route path="/contact" element={<Contact />} />
             {/* ADD ALL CUSTOM ROUTES ABOVE THE CATCH-ALL "*" ROUTE */}
             <Route path="*" element={<NotFound />} />
           </Routes>

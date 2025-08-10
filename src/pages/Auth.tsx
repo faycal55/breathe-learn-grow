@@ -23,6 +23,7 @@ const Auth = () => {
   const [lastNameUp, setLastNameUp] = useState("");
   const [countryUp, setCountryUp] = useState("");
   const [phoneUp, setPhoneUp] = useState("");
+  const [acceptTerms, setAcceptTerms] = useState(false);
   const [loadingUp, setLoadingUp] = useState(false);
 
   // Auth par téléphone (OTP SMS)
@@ -63,6 +64,10 @@ const Auth = () => {
   };
 
   const handleSignup = async () => {
+    if (!acceptTerms) {
+      toast({ title: "Conditions requises", description: "Vous devez accepter les Conditions Générales pour continuer.", variant: "destructive" });
+      return;
+    }
     setLoadingUp(true);
     try {
       const redirectUrl = `${window.location.origin}/`;
@@ -197,7 +202,13 @@ const Auth = () => {
                   <Label htmlFor="passwordUp">Mot de passe</Label>
                   <Input id="passwordUp" type="password" value={passwordUp} onChange={(e) => setPasswordUp(e.target.value)} />
                 </div>
-                <Button className="w-full" onClick={handleSignup} disabled={loadingUp}>
+                <div className="flex items-start gap-2 text-sm">
+                  <input id="acceptTerms" type="checkbox" className="mt-1" checked={acceptTerms} onChange={(e) => setAcceptTerms(e.target.checked)} />
+                  <label htmlFor="acceptTerms" className="leading-tight">
+                    J’accepte les <a href="/conditions-generales" className="underline">Conditions Générales</a> et j’ai lu les <a href="/legal" className="underline">Mentions légales & RGPD</a>.
+                  </label>
+                </div>
+                <Button className="w-full" onClick={handleSignup} disabled={loadingUp || !acceptTerms}>
                   {loadingUp ? "Inscription..." : "Créer un compte"}
                 </Button>
                 <p className="text-xs text-muted-foreground">Après inscription, vous pouvez aussi utiliser la vérification par SMS.</p>
@@ -235,7 +246,9 @@ const Auth = () => {
         </Card>
         <div className="mt-6 text-center text-xs text-muted-foreground space-x-4">
           <a href="/legal" className="underline">Mentions légales</a>
+          <a href="/conditions-generales" className="underline">Conditions générales</a>
           <a href="/conditions-paiement" className="underline">Conditions de paiement</a>
+          <a href="/contact" className="underline">Contact</a>
         </div>
       </article>
     </main>

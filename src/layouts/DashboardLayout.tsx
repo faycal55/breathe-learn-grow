@@ -77,7 +77,18 @@ export default function DashboardLayout() {
             {!checking && subscribed === false && (
               <div className="ml-4 text-sm text-muted-foreground">Abonnement requis</div>
             )}
-            {/* Removed marketing site button as requested */}
+            <div className="ml-auto flex items-center gap-2">
+              <Button
+                variant="outline"
+                onClick={async () => {
+                  await supabase.auth.signOut();
+                  toast({ title: "Déconnecté" });
+                  navigate("/auth", { replace: true });
+                }}
+              >
+                Déconnexion
+              </Button>
+            </div>
           </header>
           <main className="container mx-auto px-4 py-6">
             <Outlet />

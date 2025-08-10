@@ -12,3 +12,5 @@ verify_jwt = false
 [functions.ai-scheduler]
 verify_jwt = true
 
+[functions.contact-support]
+verify_jwt = false
