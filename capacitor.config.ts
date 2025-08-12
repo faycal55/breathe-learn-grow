@@ -1,7 +1,7 @@
 import type { CapacitorConfig } from '@capacitor/cli'
 
 const config: CapacitorConfig = {
-  appId: 'app.lovable.12cb29f086544df0b579361b355d06a2',
+  appId: 'app.lovable.breathelearngrow',
   appName: 'breathe-learn-grow',
   webDir: 'dist',
   bundledWebRuntime: false,
